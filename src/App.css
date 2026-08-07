@@ -1,0 +1,1724 @@
+/* Reseteo global */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Reseteo y tipografía */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #f8fafc;
+  color: #334155;
+}
+
+/* Estructura principal: 100% de la pantalla */
+.layout {
+  display: flex;
+  width: 100vw;  /* Ancho total de la ventana del navegador */
+  height: 100vh; /* Alto total de la ventana del navegador */
+}
+
+/* Barra Lateral (Pegada a la izquierda) */
+.sidebar {
+  width: 250px;
+  min-width: 250px; /* Evita que se encoja */
+  background-color: #1e293b;
+  color: white;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.logo h2 {
+  font-size: 1.5rem;
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nav-item {
+  color: #94a3b8;
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.nav-item:hover, .nav-item.active {
+  background-color: #334155;
+  color: white;
+}
+
+/* Contenido Principal (Rellena el resto de la pantalla) */
+.main-content {
+  flex: 1; /* Ocupa todo el espacio que deja la sidebar */
+  padding: 2rem 3rem;
+  overflow-y: auto; /* Si hay muchas habitaciones, aparece el scroll SOLO aquí */
+  height: 100%;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.top-bar h1 {
+  font-size: 1.75rem;
+  color: #0f172a;
+}
+
+.fecha {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+  text-transform: capitalize;
+}
+
+/* Grid de Habitaciones */
+.grid-habitaciones {
+  display: grid;
+  /* Auto-fill hace que se acomoden solas, mínimo 220px de ancho */
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Tarjeta (Card) */
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border: 1px solid #f1f5f9;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 160px;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 10px;
+}
+
+.room-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.card-body {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 1rem;
+}
+
+.room-type {
+  font-size: 0.85rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.precio {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.precio span {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.cargando {
+  text-align: center;
+  margin-top: 4rem;
+  font-size: 1.2rem;
+  color: #64748b;
+}
+
+/* Estilos para la barra de acciones y botones */
+.actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.btn-primario {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primario:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-full {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  font-size: 1rem;
+}
+
+/* Estilos del Modal (Overlay y Caja) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+  font-size: 1.25rem;
+  color: #0f172a;
+}
+
+.btn-cerrar {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #64748b;
+}
+
+/* Estilos del Formulario */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #334155;
+  font-size: 0.9rem;
+}
+
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus, .form-group select:focus {
+  border-color: #2563eb;
+}
+
+/* Estilo mágico para que el SELECT parezca un Badge */
+.badge-select {
+  padding: 0.35rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  text-align: center;
+  white-space: nowrap;
+  min-width: 110px;
+  width: auto;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* Heredar los colores de los badges ya realizados */
+.badge-select.disponible { background-color: #dcfce7; color: #166534; }
+.badge-select.ocupada { background-color: #fee2e2; color: #991b1b; }
+.badge-select.limpieza { background-color: #fef9c3; color: #854d0e; }
+.badge-select.mantenimiento { background-color: #e2e8f0; color: #475569; }
+
+/* Estilo al abrir el menú desplegable */
+.badge-select option {
+  background-color: white;
+  color: #334155;
+  padding: 5px;
+  border-radius: 0;
+}
+
+/* Botones de acción en las tarjetas */
+.card-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-checkin {
+  flex: 1;
+  background-color: #059669; /* Verde */
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-checkin:hover { background-color: #047857; }
+
+.btn-checkout {
+  flex: 1;
+  background-color: #dc2626; /* Rojo */
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-checkout:hover { background-color: #b91c1c; }
+
+/* Panel de Métricas */
+.metrics-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  flex: 1;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  border-left: 5px solid #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.metric-card:hover { transform: translateY(-2px); }
+
+.metric-card.disponible { 
+  border-left-color: #166534; 
+  background-color: #f0fdf4;
+}
+.metric-card.ocupada { 
+  border-left-color: #991b1b; 
+  background-color: #fef2f2; 
+}
+.metric-card.limpieza { 
+  border-left-color: #854d0e; 
+  background-color: #fefce8;
+}
+.metric-card.mantenimiento { 
+  border-left-color: #475569; 
+  background-color: #f8fafc;
+}
+
+.metric-number {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.metric-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Botones de Filtro */
+.filters-bar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-filter {
+  background: white;
+  border: 1px solid #cbd5e1;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-filter:hover { background: #f1f5f9; }
+
+.btn-filter.active {
+  background: #1e293b;
+  color: white;
+  border-color: #1e293b;
+}
+
+/* Detalles del Huésped en el Modal */
+.guest-details h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #0f172a;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.guest-details p {
+  margin-bottom: 0.75rem;
+  color: #334155;
+}
+
+.guest-details strong {
+  color: #1e293b;
+  font-weight: 600;
+  display: inline-block;
+  width: 100px;
+}
+
+.search-bar {
+  position: relative;
+  width: 350px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 0.6rem 2rem 0.6rem 1rem; /* Espacio a la derecha para el botón */
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.search-bar input:focus { border-color: #2563eb; }
+
+.btn-clear-search {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #e2e8f0;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-clear-search:hover {
+  background: #cbd5e1;
+  color: #1e293b;
+}
+
+.guest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.guest-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  cursor: pointer;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.guest-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  border-color: #cbd5e1;
+}
+
+.guest-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #1e293b;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.guest-info {
+  flex: 1;
+}
+
+.guest-info h3 {
+  margin: 0 0 0.25rem 0;
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.guest-info p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.stat-badge {
+  background-color: #e0e7ff;
+  color: #3730a3;
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Modal de Historial */
+.guest-profile {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.guest-profile h3 { margin-bottom: 0.5rem; color: #0f172a; }
+.guest-profile p { margin: 0.25rem 0; color: #334155; font-size: 0.9rem; }
+
+.reservation-history h4 {
+  margin-bottom: 1rem;
+  color: #334155;
+  font-size: 1rem;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.history-room { font-weight: 600; color: #1e293b; }
+.history-date { color: #64748b; }
+
+/* Arreglar el botón del sidebar para que parezca un enlace */
+.nav-item {
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+/* === VISTA INICIO (Centro de Mando) === */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+/* Tarjeta de Acciones Rápidas */
+.alerts-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.alerts-card h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.alert-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+}
+
+.quick-actions-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quick-btn {
+  border: none;
+  padding: 1rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.quick-btn.primary {
+  background-color: #2563eb;
+  color: white;
+}
+
+.quick-btn.primary:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.quick-btn.secondary {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+.quick-btn.secondary:hover {
+  background-color: #e2e8f0;
+  transform: translateY(-2px);
+}
+
+/* Lista de Alertas */
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alert-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.alert-item.limpieza {
+  background-color: #fefce8;
+  color: #854d0e;
+  border-left: 4px solid #facc15;
+}
+
+.alert-item.mantenimiento {
+  background-color: #f8fafc;
+  color: #475569;
+  border-left: 4px solid #64748b;
+}
+
+.alert-status {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.no-alerts {
+  color: #16a34a;
+  font-weight: 500;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.placeholder-module {
+  margin-top: 3rem;
+  text-align: center;
+}
+
+/* Mejora visual para los botones del Sidebar */
+.nav-item {
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 1rem;
+  font-family: inherit;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Espacio entre el icono y el texto */
+}
+
+.nav-item:hover {
+  background-color: #334155;
+  color: white;
+}
+
+.nav-item.active {
+  background-color: #2563eb; /* Azul principal para la vista activa */
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+}
+
+/* === MODAL DE FACTURA === */
+.invoice-modal {
+  max-width: 480px;
+  border-top: 6px solid #2563eb;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.invoice-header h2 { margin: 0; color: #0f172a; }
+
+.invoice-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.invoice-title h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.invoice-title p {
+  margin: 0.25rem 0 0 0;
+  color: #16a34a; /* Verde de éxito */
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.invoice-guest {
+  background: #f8fafc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #1e293b;
+}
+
+.invoice-guest p { margin: 0.25rem 0; font-size: 0.95rem; }
+.invoice-guest strong { color: #0f172a; }
+
+.invoice-table {
+  margin-bottom: 1.5rem;
+}
+
+.invoice-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px dashed #cbd5e1;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.invoice-row.header {
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  border-bottom: 2px solid #1e293b;
+}
+
+.invoice-row.total {
+  border-bottom: none;
+  border-top: 2px solid #1e293b;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: #0f172a;
+}
+
+.invoice-row.total span:last-child {
+  color: #2563eb;
+}
+
+/* === PANTALLA DE LOGIN === */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.login-box {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+}
+
+.login-box h1 {
+  text-align: center;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+  text-align: center;
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+
+.login-hint {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.login-hint p { margin: 0.25rem 0; }
+
+/* === FOOTER DEL SIDEBAR === */
+.sidebar {
+  justify-content: space-between; /* Empuja el footer hacia abajo */
+}
+
+.sidebar-footer {
+  border-top: 1px solid #334155;
+  padding-top: 1rem;
+  margin-top: auto;
+}
+
+.user-role {
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.user-role-tag {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.btn-logout {
+  width: 100%;
+  background: #334155;
+  color: #cbd5e1;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover {
+  background: #dc2626;
+  color: white;
+}
+
+/* === SIDEBAR COLAPSABLE === */
+.btn-collapse {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+  align-self: flex-start;
+  padding: 0 0.5rem;
+}
+
+.btn-collapse:hover { color: white; }
+
+/* Transición suave para el ancho */
+.sidebar {
+  transition: width 0.3s ease, min-width 0.3s ease, padding 0.3s ease;
+}
+
+/* Cuando está colapsado */
+.sidebar.colapsado {
+  width: 70px;
+  min-width: 70px;
+  padding: 1.5rem 0.5rem;
+  align-items: center;
+}
+
+.sidebar.colapsado .logo { display: none; }
+
+.sidebar.colapsado .nav-item {
+  justify-content: center;
+  padding: 0.75rem;
+  font-size: 1.2rem;
+}
+
+.sidebar.colapsado .sidebar-footer {
+  border-top: 1px solid #334155;
+  padding-top: 1rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar.colapsado .btn-logout {
+  width: auto;
+  padding: 0.5rem 0.6rem;
+  font-size: 1.2rem;
+}
+
+/* === CSS DASHBOARD GERENCIAL === */
+.section-title {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: #0f172a;
+  font-size: 1.2rem;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+/* Tarjeta de Utilidad (Azul para destacarla) */
+.metric-card.utilidad {
+  border-left-color: #2563eb;
+  background-color: #eff6ff;
+}
+
+/* Semáforos de Ocupación */
+.metric-card.semaforo {
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+.metric-card.semaforo::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 8px;
+}
+.metric-card.semaforo.verde { background-color: #f0fdf4; }
+.metric-card.semaforo.verde::before { background-color: #16a34a; }
+.metric-card.semaforo.amarillo { background-color: #fefce8; }
+.metric-card.semaforo.amarillo::before { background-color: #facc15; }
+.metric-card.semaforo.rojo { background-color: #fef2f2; }
+.metric-card.semaforo.rojo::before { background-color: #dc2626; }
+
+/* Tabla VIP */
+.vip-table-container {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  margin-top: 1rem;
+}
+
+.vip-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vip-table th {
+  text-align: left;
+  color: #64748b;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.vip-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.vip-name {
+  font-weight: 600;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.vip-medal {
+  background: #1e293b;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.vip-badge {
+  background: #dcfce7;
+  color: #166534;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+/* === NOTIFICACIONES TOAST === */
+.toast-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 9999;
+  animation: slideInRight 0.3s ease-out;
+  border-left: 5px solid #16a34a;
+  max-width: 350px;
+}
+
+.toast-notification.error {
+  border-left-color: #dc2626;
+}
+
+.toast-icon {
+  font-size: 1.2rem;
+}
+
+.toast-message {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* === MODAL DE RESERVA (2 COLUMNAS) === */
+.modal-reserva {
+  max-width: 850px; /* Lo hacemos más ancho */
+  width: 90%;
+}
+
+.reserva-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 columnas iguales */
+  gap: 2rem;
+}
+
+.reserva-col h3 {
+  font-size: 1.1rem;
+  color: #0f172a;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+/* El botón ocupa todo el ancho cruzando las dos columnas */
+.reserva-footer {
+  grid-column: 1 / -1; 
+  margin-top: 0.5rem;
+}
+
+/* Si la pantalla es pequeña (ej: una tablet), lo apilamos en 1 columna */
+@media (max-width: 768px) {
+  .reserva-form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* === MODAL DE CHECK-IN (2 COLUMNAS) === */
+.modal-checkin {
+  max-width: 850px; /* Lo hacemos más ancho */
+  width: 90%;
+}
+
+.checkin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 2 columnas iguales */
+  gap: 2rem;
+}
+
+.checkin-col h3 {
+  font-size: 1.1rem;
+  color: #0f172a;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+/* El botón ocupa todo el ancho cruzando las dos columnas */
+.checkin-footer {
+  grid-column: 1 / -1; 
+  margin-top: 0.5rem;
+}
+
+/* Si la pantalla es pequeña, lo apilamos en 1 columna */
+@media (max-width: 768px) {
+  .checkin-form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Aseguramos que el modal haga scroll si la pantalla es muy baja */
+.modal-content {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* === SIMULADOR DE COSTOS === */
+.simulador-caja {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.simulador-fila {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #475569;
+  padding: 0.25rem 0;
+}
+
+.simulador-fila.descuento {
+  color: #dc2626;
+}
+
+.simulador-fila.total {
+  border-top: 2px solid #1e293b;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.simulador-fila.total span:last-child {
+  color: #2563eb;
+}
+
+/* Alerta de Deuda (Rojo) */
+.alert-item.deuda {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border-left: 4px solid #dc2626;
+}
+
+.alert-item.deuda .alert-status {
+  color: #b91c1c;
+  font-weight: 800;
+}
+
+/* Ajuste de la alerta de deuda para que quepa el botón */
+.alert-item.deuda {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.deuda-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.deuda-info .alert-status {
+  font-size: 0.8rem;
+}
+
+/* Botón de Pagar */
+.btn-pagar-gasto {
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-pagar-gasto:hover {
+  background-color: #15803d;
+}
+
+/* === VISTA BANDEJA DE RESERVAS === */
+.reservations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* === VISTA BANDEJA DE RESERVAS (Grid Alineado) === */
+.reservation-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  display: grid;
+  /* 5 Columnas: Huésped | Fechas | Precio | Estado | Acción */
+  grid-template-columns: 2fr 1.5fr 1fr 1fr 0.8fr;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.reservation-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* Columna 1: Info */
+.res-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.res-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1e293b;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.res-info h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.res-info p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+/* Columna 2: Fechas */
+.res-dates {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+  color: #334155;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Columna 3: Precio */
+.res-price {
+  font-size: 1.1rem;
+  color: #059669;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* Columna 4: Estado */
+.res-status {
+  text-align: center;
+}
+
+/* Columna 5: Acción */
+.res-action {
+  text-align: right;
+}
+
+/* Botón de Cancelar (Estilo Ghost/Limpiar) */
+.btn-cancelar-reserva {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+/* Responsive: Si la pantalla es muy pequeña, apilamos en 2 filas */
+@media (max-width: 900px) {
+  .reservation-card {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  .res-action, .res-status, .res-price {
+    text-align: left;
+  }
+}
+
+/* Paginación */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.pagination-controls button {
+  background: white;
+  border: 1px solid #cbd5e1;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #334155;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-controls span {
+  font-weight: 600;
+  color: #475569;
+}
+
+/* Estilo para los inputs de fecha */
+.date-filter {
+  padding: 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #334155;
+  outline: none;
+  font-family: inherit;
+}
+
+.date-filter:focus {
+  border-color: #2563eb;
+}
+
+/* Ajuste para la barra de filtros en Reservas */
+.filters-bar {
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  align-items: center;
+}
+
+/* === BOTÓN LIMPIAR FILTROS (Moderno) === */
+.btn-limpiar {
+  background-color: #ffffff;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.btn-limpiar:hover {
+  background-color: #f8fafc;
+  color: #dc2626; /* Se pone rojizo al pasar el ratón para indicar "borrar" */
+  border-color: #fecaca;
+}
+
+/* === BOTÓN MÁGICO CHECK-IN === */
+.btn-magic-checkin {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+  white-space: nowrap;
+}
+
+.btn-magic-checkin:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3);
+}
+
+/* El botón de cancelar solo ícono */
+.btn-cancelar-reserva {
+  padding: 0.4rem 0.6rem !important;
+  font-size: 0.9rem !important;
+}
+
+/* Botón sutil para salidas en Inicio */
+.btn-salida-rapida {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.btn-salida-rapida:hover {
+  background-color: #b91c1c;
+  transform: translateY(-1px);
+}
+
+/* Input de mes en Dashboard */
+input[type="month"].date-filter {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+}
+
+/* Contenedor de Reservas y Notas en la tarjeta */
+.guest-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0; /* Evita que se aplaste */
+}
+
+/* Botón de ícono (sutil, como el de limpiar) */
+.btn-icon {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+/* === AREA DE TEXTO NOTAS === */
+.textarea-notas {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #334155;
+  outline: none;
+  resize: vertical;
+}
+
+.textarea-notas:focus {
+  border-color: #2563eb;
+}
+
+/* === VISTA CONFIGURACIÓN === */
+.config-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  max-width: 800px;
+}
+
+.config-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.config-card h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #0f172a;
+  font-size: 1.1rem;
+}
+
+.config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.config-item:last-child { border-bottom: none; }
+
+.config-title { font-weight: 600; color: #1e293b; margin: 0 0 0.25rem 0; }
+.config-desc { font-size: 0.85rem; color: #64748b; margin: 0; }
+
+/* Interruptor (Toggle Switch) */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #cbd5e1;
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px; width: 20px;
+  left: 3px; bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+input:checked + .slider { background-color: #2563eb; }
+input:checked + .slider:before { transform: translateX(24px); }
+
+/* ---------------------------------------------------------------------------------------------------------------------------------------------- */
+
+/* === MODO OSCURO (DARK MODE) === */
+body.dark-mode {
+  background-color: #111827; /* Gris azulado muy oscuro */
+  color: #e5e7eb;
+}
+
+/* Sidebar */
+body.dark-mode .sidebar { background-color: #030712; border-right: 1px solid #1f2937; }
+body.dark-mode .nav-item { color: #9ca3af; }
+body.dark-mode .nav-item:hover { background-color: #1f2937; color: white; }
+body.dark-mode .nav-item.active { background-color: #2563eb; color: white; }
+body.dark-mode .sidebar-footer { border-top: 1px solid #1f2937; }
+
+/* Cabeceras */
+body.dark-mode .main-content { background-color: #111827; }
+body.dark-mode .top-bar { border-bottom-color: #1f2937; }
+body.dark-mode .top-bar h1, body.dark-mode .section-title { color: #f9fafb; }
+body.dark-mode .fecha, body.dark-mode .metric-label, body.dark-mode .alert-subtitle, body.dark-mode .config-desc { color: #9ca3af; }
+
+/* Tarjetas Base (Backgrounds oscuros pero no negros puros) */
+body.dark-mode .metric-card,
+body.dark-mode .quick-actions-card,
+body.dark-mode .alerts-card,
+body.dark-mode .reservation-card,
+body.dark-mode .guest-card,
+body.dark-mode .vip-table-container,
+body.dark-mode .filters-bar,
+body.dark-mode .config-card {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+}
+
+/* KPIs (Colores suaves pero visibles) */
+body.dark-mode .metric-card.disponible { background-color: #064e3b !important; border-left-color: #34d399; }
+body.dark-mode .metric-card.disponible .metric-number, body.dark-mode .metric-card.disponible .metric-label { color: #d1fae5 !important; }
+
+body.dark-mode .metric-card.ocupada { background-color: #7f1d1d !important; border-left-color: #f87171; }
+body.dark-mode .metric-card.ocupada .metric-number, body.dark-mode .metric-card.ocupada .metric-label { color: #fee2e2 !important; }
+
+body.dark-mode .metric-card.limpieza { background-color: #78350f !important; border-left-color: #fbbf24; }
+body.dark-mode .metric-card.limpieza .metric-number, body.dark-mode .metric-card.limpieza .metric-label { color: #fef3c7 !important; }
+
+body.dark-mode .metric-card.utilidad { background-color: #1e3a8a !important; border-left-color: #60a5fa; }
+body.dark-mode .metric-card.utilidad .metric-number, body.dark-mode .metric-card.utilidad .metric-label { color: #dbeafe !important; }
+
+/* Textos principales */
+body.dark-mode .metric-number,
+body.dark-mode .guest-info h3,
+body.dark-mode .res-info h3,
+body.dark-mode .modal-header h2,
+body.dark-mode .checkout-col h3,
+body.dark-mode .reserva-col h3,
+body.dark-mode .config-title,
+body.dark-mode .config-item h3,
+body.dark-mode .alerts-card h3,
+body.dark-mode .config-card h3 {
+  color: #f9fafb !important;
+}
+
+body.dark-mode .guest-info p,
+body.dark-mode .res-info p,
+body.dark-mode .res-dates,
+body.dark-mode .vip-table td {
+  color: #9ca3af;
+}
+body.dark-mode .res-price { color: #4ade80 !important; }
+
+/* Inputs, Selects y Textareas */
+body.dark-mode .form-group input,
+body.dark-mode .form-group select,
+body.dark-mode .search-bar input,
+body.dark-mode .date-filter,
+body.dark-mode .textarea-notas {
+  background-color: #111827;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+body.dark-mode .form-group label { color: #d1d5db; }
+body.dark-mode .search-bar .btn-clear-search { background-color: #374151; color: #9ca3af; }
+
+/* Tabla */
+body.dark-mode .vip-table th { border-bottom-color: #374151; color: #6b7280; }
+body.dark-mode .vip-table td { border-bottom-color: #1f2937; }
+body.dark-mode .vip-name { color: #f9fafb; }
+body.dark-mode .vip-medal { background-color: #374151; color: white; }
+
+/* Botones */
+body.dark-mode .btn-icon, body.dark-mode .btn-limpiar { background-color: #374151; color: #d1d5db; border-color: #4b5563; }
+body.dark-mode .btn-filter { background: #1f2937; color: #d1d5db; border-color: #374151; }
+body.dark-mode .btn-filter.active { background: #2563eb; color: white; }
+
+/* Alertas */
+body.dark-mode .alert-item.deuda { background-color: #7f1d1d !important; color: #fecaca !important; }
+body.dark-mode .alert-item.limpieza { background-color: #78350f !important; color: #fde68a !important; }
+body.dark-mode .alert-item.mantenimiento { background-color: #374151 !important; color: #d1d5db !important; }
+body.dark-mode .no-alerts { color: #4ade80; }
+
+/* Modal */
+body.dark-mode .modal-content { background-color: #1f2937; }
+body.dark-mode .modal-overlay { background: rgba(0, 0, 0, 0.7); }
+body.dark-mode .simulador-caja { background-color: #111827; border-color: #374151; }
+body.dark-mode .simulador-fila { color: #d1d5db; }
+body.dark-mode .simulador-fila.total { border-top-color: #4b5563; color: #f9fafb; }
+
+/* === TARJETAS DE HABITACIÓN POR ESTADO EN MODO OSCURO === */
+
+/* Base de la tarjeta en modo oscuro */
+body.dark-mode .card {
+  background-color: #1f2937 !important;
+  border: 1px solid #374151 !important;
+}
+
+/* Disponible (Verde Esmeralda) */
+body.dark-mode .card-status-disponible {
+  border-left: 5px solid #34d399 !important;
+  background-color: #16241e !important; /* Sutil tinte verde */
+}
+
+/* Ocupada (Rojo Coral) */
+body.dark-mode .card-status-ocupada {
+  border-left: 5px solid #f87171 !important;
+  background-color: #261a1a !important; /* Sutil tinte rojo */
+}
+
+/* Limpieza (Ámbar) */
+body.dark-mode .card-status-limpieza {
+  border-left: 5px solid #fbbf24 !important;
+  background-color: #241d10 !important; /* Sutil tinte amarillo */
+}
+
+/* Mantenimiento (Gris Acero) */
+body.dark-mode .card-status-mantenimiento {
+  border-left: 5px solid #9ca3af !important;
+  background-color: #1c1f26 !important; /* Sutil tinte gris */
+}
+
+/* Aseguramos que el texto de la tarjeta sea legible */
+body.dark-mode .room-number { color: #f9fafb; }
+body.dark-mode .room-type { color: #9ca3af; }
+body.dark-mode .precio { color: #e5e7eb; }
+body.dark-mode .precio span { color: #6b7280; }

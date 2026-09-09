@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import './App.css';
+import { Country, State, City } from 'country-state-city';
 
 function App() {
 
@@ -40,6 +41,12 @@ function App() {
 
   });
 
+  const [modalHotelAbierto, setModalHotelAbierto] = useState(false);
+  const [formHotel, setFormHotel] = useState({});
+  const [editarHotelHabilitado, setEditarHotelHabilitado] = useState(false);
+  const [passHotel, setPassHotel] = useState('');
+  const [datosHotel, setDatosHotel] = useState(null);
+
   const [huespedes, setHuespedes] = useState([]);
   const [busqueda, setBusqueda] = useState('');
   const [huespedSeleccionado, setHuespedSeleccionado] = useState(null); // Para el modal de historial
@@ -49,6 +56,7 @@ function App() {
 
   const [usuarioLogueado, setUsuarioLogueado] = useState(null);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [cargandoApp, setCargandoApp] = useState(true);
 
   const [sidebarColapsado, setSidebarColapsado] = useState(false);
 
@@ -56,6 +64,8 @@ function App() {
 
   const [cargandoAccion, setCargandoAccion] = useState(false); // Para botones de check-in/out
   const [actualizandoDash, setActualizandoDash] = useState(false); // Para el dashboard
+  const [cargandoLlegadas, setCargandoLlegadas] = useState(true);
+  const [cargandoSalidas, setCargandoSalidas] = useState(true);
 
   const [toast, setToast] = useState(null);
 
@@ -102,39 +112,74 @@ function App() {
   const [huespedNotas, setHuespedNotas] = useState(null);
   const [textoNota, setTextoNota] = useState('');
 
+  const [temporadas, setTemporadas] = useState([]);
+  const [modalTemporadaAbierto, setModalTemporadaAbierto] = useState(false);
+  const [formTemporada, setFormTemporada] = useState({ nombre: '', fechaInicio: '', fechaFin: '', porcentaje: '20', diasAplicables: ['0','1','2','3','4','5','6'] });
+
   const [modoOscuro, setModoOscuro] = useState(() => {
     return localStorage.getItem('modoOscuro') === 'true';
   });
 
   // ----------------------------------------------------------------------------------------------
 
-  // Función para obtener huéspedes desde el backend    
+  // Interceptor de Fetch (Envía cookies automáticamente)
+  const originalFetch = window.fetch;
+  window.fetch = function(...args) {
+
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('/api/')) {
+
+      args[1] = args[1] || {};
+      args[1].credentials = 'include';
+
+    }
+
+    return originalFetch.apply(this, args);
+
+  };
+
+  // Función para obtener huéspedes desde el backend
   const obtenerHuespedes = (textoBusqueda = '') => {
 
     const url = textoBusqueda 
-      ? `https://myhotel-rvdu.onrender.com/api/huespedes?q=${textoBusqueda}` 
-      : 'https://myhotel-rvdu.onrender.com/api/huespedes';
+      ? `http://localhost:3000/api/huespedes?q=${textoBusqueda}` 
+      : 'http://localhost:3000/api/huespedes';
     
     fetch(url)
       .then(res => res.json())
-      .then(data => setHuespedes(data))
-      .catch(err => console.error(err));
+      .then(data => {
+
+        if (Array.isArray(data)) {
+
+          setHuespedes(data);
+        } else {
+
+          console.error('El backend devolvió un error:', data);
+          setHuespedes([]);
+
+        }
+      })
+      .catch(err => {
+
+        console.error('Error de red:', err);
+        setHuespedes([]);
+
+      });
   };
 
   useEffect(() => {
 
+    // Si la vista actual es 'huespedes', disparamos la búsqueda
     if (vistaActual === 'huespedes') {
 
       obtenerHuespedes(busqueda);
 
     }
-
-  }, [vistaActual, busqueda]);
+  }, [vistaActual, busqueda]); // Se ejecuta cuando cambias de pestaña o cuando escribes en el buscador
 
   // Función para obtener habitaciones desde el backend
   const obtenerHabitaciones = () => {
 
-    fetch('https://myhotel-rvdu.onrender.com/api/habitaciones')
+    fetch('http://localhost:3000/api/habitaciones')
       .then(res => res.json())
       .then(data => {
 
@@ -174,28 +219,36 @@ function App() {
     
     try {
 
-      const response = await fetch('https://myhotel-rvdu.onrender.com/api/habitaciones', {
+      const response = await fetch('http://localhost:3000/api/habitaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formulario)
+        body: JSON.stringify({
+
+          numero: formulario.numero,
+          tipo: formulario.tipo,
+          precioBase: formulario.precioBase,
+          estado: formulario.estado || 'Disponible'
+
+        })
 
       });
 
       if (response.ok) {
 
         // Si todo sale bien, cerramos el modal, limpiamos el formulario y recargamos los datos
+        mostrarToast('Habitación creada con éxito', 'exito');
         setModalAbierto(false);
-        setFormulario({ numero: '', tipo: 'Single', precioBase: '', estado: 'Disponible' });
         obtenerHabitaciones(); // ¡Recarga automática!
 
       } else {
 
-        console.error('Error al guardar la habitación');
+        const errorData = await response.json();
+        mostrarToast('Error al crear habitación', 'error');
 
       }
     } catch (error) {
 
-      console.error('Error de red:', error);
+      mostrarToast('Error de red:', 'error');
 
     }
   };
@@ -205,7 +258,7 @@ function App() {
 
     try {
 
-      const repsonse = await fetch(`https://myhotel-rvdu.onrender.com/api/habitaciones/${id}`, {
+      const repsonse = await fetch(`http://localhost:3000/api/habitaciones/${id}`, {
 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -242,7 +295,7 @@ function App() {
 
     try {
 
-      const response = await fetch('https://myhotel-rvdu.onrender.com/api/checkin', {
+      const response = await fetch('http://localhost:3000/api/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formularioHuesped, habitacionId: habitacionCheckIn })
@@ -284,7 +337,7 @@ function App() {
 
     try {
 
-      const response = await fetch('https://myhotel-rvdu.onrender.com/api/reservas', {
+      const response = await fetch('http://localhost:3000/api/reservas', {
 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -326,7 +379,7 @@ function App() {
 
     try {
 
-      const response = await fetch('https://myhotel-rvdu.onrender.com/api/gastos', {
+      const response = await fetch('http://localhost:3000/api/gastos', {
 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -365,7 +418,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`https://myhotel-rvdu.onrender.com/api/gastos/${id}/pagar`, { method: 'PUT' });
+      const response = await fetch(`http://localhost:3000/api/gastos/${id}/pagar`, { method: 'PUT' });
 
       if (response.ok) {
 
@@ -393,7 +446,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`https://myhotel-rvdu.onrender.com/api/huespedes/documento/${documento}`);
+      const response = await fetch(`http://localhost:3000/api/huespedes/documento/${documento}`);
 
       if (response.ok) {
 
@@ -435,88 +488,116 @@ function App() {
 
   // Simulación de Check-in en tiempo real
   useEffect(() => {
+
     if (habitacionCheckIn && formularioHuesped.fechaCheckOut) {
 
-      const hab = habitaciones.find(h => h.id === habitacionCheckIn);
+      fetch('http://localhost:3000/api/calcular-precio', {
 
-      if (hab) {
-        
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0); // Igualamos a medianoche
-        
-        const [y, m, d] = formularioHuesped.fechaCheckOut.split('-').map(Number);
-        const salida = new Date(y, m - 1, d, 0, 0, 0); // Medianoche
-        
-        let diffTime = salida - hoy;
-        let noches = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        if (noches <= 0) noches = 1; // Mínimo 1 noche
-        
-        let total = noches * hab.precioBase;
-        if (formularioHuesped.descuento && !isNaN(parseFloat(formularioHuesped.descuento))) {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
 
-          total -= parseFloat(formularioHuesped.descuento);
+          habitacionId: habitacionCheckIn,
+          fechaCheckIn: new Date().toISOString(), // Hoy
+          fechaCheckOut: formularioHuesped.fechaCheckOut,
+          descuento: formularioHuesped.descuento
 
-        }
-        if (total < 0) total = 0;
+        })
+
+      })
+
+        .then(res => res.json())
+        .then(data => {
+          
+          if (data && data.total !== undefined) {
+
+            setSimulacionCheckIn(data);
+
+          } else {
+
+            console.error("Error en cálculo del backend:", data);
+            setSimulacionCheckIn({ noches: 0, subtotal: 0, total: 0 });
+
+          }
         
-        setSimulacionCheckIn({ noches, total });
+        })
+        .catch(err => {
+          
+          console.error('Error de red:', err);
+          setSimulacionCheckIn({ noches: 0, subtotal: 0, total: 0 });
 
-      }
+        });
 
     }
 
-  }, [habitacionCheckIn, formularioHuesped.fechaCheckOut, formularioHuesped.descuento, habitaciones]);
+  }, [habitacionCheckIn, formularioHuesped.fechaCheckOut, formularioHuesped.descuento]);
 
   // Simulación de Reserva en tiempo real
   useEffect(() => {
 
     if (formularioReserva.habitacionId && formularioReserva.fechaCheckIn && formularioReserva.fechaCheckOut) {
 
-      const hab = habitaciones.find(h => h.id === parseInt(formularioReserva.habitacionId));
+      fetch('http://localhost:3000/api/calcular-precio', {
 
-      if (hab) {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
 
-        const [y1, m1, d1] = formularioReserva.fechaCheckIn.split('-').map(Number);
-        const [y2, m2, d2] = formularioReserva.fechaCheckOut.split('-').map(Number);
-        const entrada = new Date(y1, m1 - 1, d1, 0, 0, 0);
-        const salida = new Date(y2, m2 - 1, d2, 0, 0, 0);
+          habitacionId: formularioReserva.habitacionId,
+          fechaCheckIn: formularioReserva.fechaCheckIn,
+          fechaCheckOut: formularioReserva.fechaCheckOut,
+          descuento: formularioReserva.descuento
+
+        })
+
+      })
+
+        .then(res => res.json())
+        .then(data => {
+
+          
+          if (data && data.total !== undefined) {
+
+            setSimulacionReserva(data);
+
+          } else {
+
+            console.error("Error en cálculo del backend:", data);
+            setSimulacionReserva({ noches: 0, subtotal: 0, total: 0 });
+
+          }
+
+        })
+        .catch(err => {
+
+          console.error('Error de red:', err);
+          setSimulacionReserva({ noches: 0, subtotal: 0, total: 0 });
+          
+        });
         
-        let diffTime = salida - entrada;
-        let noches = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        if (noches <= 0) noches = 1;
-        
-        let total = noches * hab.precioBase;
-        if (formularioReserva.descuento && !isNaN(parseFloat(formularioReserva.descuento))) {
-
-          total -= parseFloat(formularioReserva.descuento);
-
-        }
-
-        if (total < 0) total = 0;
-        setSimulacionReserva({ noches, total });
-      }
-
     }
-
-  }, [formularioReserva.habitacionId, formularioReserva.fechaCheckIn, formularioReserva.fechaCheckOut, formularioReserva.descuento, habitaciones]);
+    
+  }, [formularioReserva.habitacionId, formularioReserva.fechaCheckIn, formularioReserva.fechaCheckOut, formularioReserva.descuento]);
 
   // Obtener llegadas de hoy
   const obtenerLlegadasHoy = () => {
 
-    fetch('https://myhotel-rvdu.onrender.com/api/reservas/hoy')
+    setCargandoLlegadas(true);
+    fetch('http://localhost:3000/api/reservas/hoy')
       .then(res => res.json())
-      .then(data => setLlegadasHoy(Array.isArray(data) ? data : []))
-      .catch(err => console.error(err));
+      .then(data => { setLlegadasHoy(Array.isArray(data) ? data : []); setCargandoLlegadas(false); })
+      .catch(err => { console.error(err); setCargandoLlegadas(false); });
 
   };
 
   // Obtener salidas de hoy
   const obtenerSalidasHoy = () => {
 
-    fetch('https://myhotel-rvdu.onrender.com/api/reservas/salidas-hoy')
+    setCargandoSalidas(true);
+    fetch('http://localhost:3000/api/reservas/salidas-hoy')
       .then(res => res.json())
-      .then(data => setSalidasHoy(Array.isArray(data) ? data : []))
-      .catch(err => console.error(err));
+      .then(data => { setSalidasHoy(Array.isArray(data) ? data : []); setCargandoSalidas(false); })
+      .catch(err => { console.error(err); setCargandoSalidas(false); });
 
   };
 
@@ -525,7 +606,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`https://myhotel-rvdu.onrender.com/api/huespedes/${huespedNotas.id}/notas`, {
+      const response = await fetch(`http://localhost:3000/api/huespedes/${huespedNotas.id}/notas`, {
 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -556,7 +637,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`https://myhotel-rvdu.onrender.com/api/checkout/${id}`, { method: 'PUT' });
+      const response = await fetch(`http://localhost:3000/api/checkout/${id}`, { method: 'PUT' });
       const data = await response.json(); 
       
       if (response.ok) {
@@ -599,10 +680,6 @@ function App() {
 
       obtenerLlegadasHoy();
       obtenerSalidasHoy();
-      fetch('https://myhotel-rvdu.onrender.com/api/configuracion')
-        .then(res => res.json())
-        .then(data => setConfigHotel(data))
-        .catch(err => console.error(err));
 
     }
 
@@ -611,7 +688,7 @@ function App() {
   // Obtener todas las reservas
   const obtenerTodasReservas = () => {
 
-    fetch('https://myhotel-rvdu.onrender.com/api/reservas')
+    fetch('http://localhost:3000/api/reservas')
       .then(res => res.json())
       .then(data => setTodasReservas(Array.isArray(data) ? data : []))
       .catch(err => console.error(err));
@@ -634,7 +711,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`https://myhotel-rvdu.onrender.com/api/reservas/${id}/checkin`, { method: 'PUT' });
+      const response = await fetch(`http://localhost:3000/api/reservas/${id}/checkin`, { method: 'PUT' });
       const data = await response.json();
       
       if (response.ok) {
@@ -663,7 +740,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`https://myhotel-rvdu.onrender.com/api/reservas/${id}/estado`, {
+      const response = await fetch(`http://localhost:3000/api/reservas/${id}/estado`, {
 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -688,16 +765,18 @@ function App() {
 
   // Helper: Saber si una fecha es hoy
   const esHoy = (fechaISO) => {
-
+    
     if (!fechaISO) return false;
     const date = new Date(fechaISO);
+    
+    // Ajustamos el offset de zona horaria para que lea la fecha local correcta
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    const localDate = new Date(date.getTime() + userTimezoneOffset);
+    
     const today = new Date();
-
-    // Comparamos usando los componentes de la fecha local
-    return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
-           
+    return localDate.getDate() === today.getDate() &&
+           localDate.getMonth() === today.getMonth() &&
+           localDate.getFullYear() === today.getFullYear();
   };
 
   // Helper: Formatear período
@@ -789,7 +868,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`https://myhotel-rvdu.onrender.com/api/reservas/${reservaACancelar.id}/cancelar`, {
+      const response = await fetch(`http://localhost:3000/api/reservas/${reservaACancelar.id}/cancelar`, {
 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -919,13 +998,26 @@ function App() {
   // Cargar usuario desde memoria al recargar la página
   useEffect(() => {
 
-    const guardado = localStorage.getItem('usuarioHotel');
+    fetch('http://localhost:3000/api/auth/me', { credentials: 'include' })
+      .then(res => {
 
-    if (guardado) {
+          if (!res.ok) throw new Error('No autenticado');
+          return res.json();
 
-      setUsuarioLogueado(JSON.parse(guardado));
+      })
+      .then(data => {
 
-    }
+        setUsuarioLogueado(data.usuario);
+        setDatosHotel(data.hotel);
+
+      })
+      .catch(() => {
+
+        //Si no esta autenticado, no se hace nada, se quedará en la pantalla de login
+        setUsuarioLogueado(null);
+
+      })
+      .finally(() => setCargandoApp(false));
 
   }, []);
 
@@ -936,10 +1028,11 @@ function App() {
 
     try {
 
-      const response = await fetch('https://myhotel-rvdu.onrender.com/api/auth/login', {
+      const response = await fetch('http://localhost:3000/api/auth/login', {
 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(loginData)
 
       });
@@ -948,8 +1041,7 @@ function App() {
 
         const data = await response.json();
         setUsuarioLogueado(data.usuario);
-        localStorage.setItem('usuarioHotel', JSON.stringify(data.usuario));
-        localStorage.setItem('tokenHotel', data.token);
+        setDatosHotel(data.hotel);
         mostrarToast('¡Bienvenido!', 'exito');
 
       } else {
@@ -966,11 +1058,26 @@ function App() {
   };
 
   // Función Cerrar sesión
-  const handleLogout = () => {
+  const handleLogout = async () => {
 
+    try {
+
+      await fetch('http://localhost:3000/api/auth/logout', {
+
+        method: 'POST',
+        credentials: 'include'
+        
+      });
+
+    } catch (error) {
+
+      console.error('Error al cerrar sesión', error);
+
+    }
+
+    // Limpiar el estado de memoria
     setUsuarioLogueado(null);
-    localStorage.removeItem('usuarioHotel');
-    localStorage.removeItem('tokenHotel');
+    setDatosHotel(null);
     setVistaActual('inicio');
 
   };
@@ -983,26 +1090,30 @@ function App() {
   }, [vistaActual]);
 
   // Obtener datos del dashboard cuando se entra a la vista
-    useEffect(() => {
-
+  useEffect(() => {
     if (vistaActual === 'dashboard' && usuarioLogueado?.rol === 'Gerente') {
-
       setActualizandoDash(true);
-      let url = 'https://myhotel-rvdu.onrender.com/api/dashboard';
+      let url = 'http://localhost:3000/api/dashboard';
       if (dashFechaInicio && dashFechaFin) {
-
         url += `?inicio=${dashFechaInicio}&fin=${dashFechaFin}`;
-
       }
         
       fetch(url)
-        .then(res => { if (!res.ok) throw new Error('Error'); return res.json(); })
-        .then(data => { if (data && data.kpis) setDashboardData(data); })
-        .catch(err => console.error(err))
+        .then(res => { if (!res.ok) throw new Error('Error en el servidor'); return res.json(); })
+        .then(data => {
+          if (data && data.kpis) {
+            setDashboardData(data);
+          } else {
+            console.error('Error en dashboard:', data);
+            mostrarToast('Error al cargar el dashboard', 'error');
+          }
+        })
+        .catch(err => {
+          console.error('Error al cargar dashboard:', err);
+          mostrarToast('Error de conexión al cargar dashboard', 'error');
+        })
         .finally(() => setActualizandoDash(false));
-
     }
-
   }, [vistaActual, usuarioLogueado, dashFechaInicio, dashFechaFin]);
 
   // Obtener gastos pendientes (Solo Gerente)
@@ -1010,7 +1121,7 @@ function App() {
 
     if (usuarioLogueado?.rol === 'Gerente') {
 
-      fetch('https://myhotel-rvdu.onrender.com/api/gastos/pendientes')
+      fetch('http://localhost:3000/api/gastos/pendientes')
         .then(res => res.json())
         .then(data => setGastosPendientes(data))
         .catch(err => console.error(err));
@@ -1025,6 +1136,155 @@ function App() {
     obtenerGastosPendientes();
 
   }, [usuarioLogueado]);
+
+  // Funcion para abrir el modal y precargar los datos del hotel 
+  const abrirModalHotel = () => {
+
+    setFormHotel(datosHotel || {}); // Precargamos la data real
+    setEditarHotelHabilitado(false); // Bloqueado por defecto
+    setPassHotel('');
+    setModalHotelAbierto(true);
+
+  };
+
+  // Funcion para enviar los cambios de datos del hotel al backend
+  const handleGuardarHotel = async (e) => {
+
+    e.preventDefault();
+    setCargandoAccion(true);
+    try {
+
+      const response = await fetch('http://localhost:3000/api/hotel', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+
+          email: usuarioLogueado.email,
+          password: passHotel,
+          datosHotel: formHotel
+
+        })
+
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+
+        mostrarToast('Datos del hotel actualizados', 'exito');
+        // Actualizamos la memoria del navegador
+        localStorage.setItem('datosHotel', JSON.stringify(data));
+        setDatosHotel(data);
+        setModalHotelAbierto(false);
+
+      } else {
+
+        mostrarToast('Error: ' + data.error, 'error');
+
+      }
+
+    } catch (error) {
+
+      mostrarToast('Error de conexión', 'error');
+
+    } finally {
+
+      setCargandoAccion(false);
+
+    }
+
+  };
+
+  // Helper para inputs
+  const handleInputHotel = (e) => {
+    setFormHotel({ ...formHotel, [e.target.name]: e.target.value });
+  };
+
+  // Función para manejar los cambios en los inputs del formulario de hotel
+  const handleInputChangeHotel = (e) => {
+
+    setDatosHotel({ ...datosHotel, [e.target.name]: e.target.value });
+
+  };
+
+  // === TEMPORADAS ===
+  const obtenerTemporadas = () => {
+
+    fetch('http://localhost:3000/api/temporadas')
+      .then(res => res.json())
+      .then(data => setTemporadas(Array.isArray(data) ? data : []))
+      .catch(err => console.error(err));
+
+  };
+
+  useEffect(() => {
+
+    if (vistaActual === 'configuracion') obtenerTemporadas();
+
+  }, [vistaActual]);
+
+  const handleDiasChange = (dia) => {
+
+    setFormTemporada(prev => {
+
+      const dias = prev.diasAplicables.includes(dia) 
+        ? prev.diasAplicables.filter(d => d !== dia) 
+        : [...prev.diasAplicables, dia];
+      return { ...prev, diasAplicables: dias };
+
+    });
+
+  };
+
+  const handleSubmitTemporada = async (e) => {
+
+    e.preventDefault();
+    setCargandoAccion(true);
+    try {
+
+      const response = await fetch('http://localhost:3000/api/temporadas', {
+
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formTemporada, diasAplicables: formTemporada.diasAplicables.join(',') })
+
+      });
+      if (response.ok) {
+
+        mostrarToast('Temporada creada con éxito', 'exito');
+        setModalTemporadaAbierto(false);
+        setFormTemporada({ nombre: '', fechaInicio: '', fechaFin: '', porcentaje: '20', diasAplicables: ['0','1','2','3','4','5','6'] });
+        obtenerTemporadas();
+
+      }
+
+    } catch (error) {
+
+      mostrarToast('Error al crear temporada', 'error');
+
+    } finally {
+
+      setCargandoAccion(false);
+
+    }
+
+  };
+
+  const handleEliminarTemporada = async (id) => {
+
+    if (!window.confirm('¿Eliminar esta regla de precios?')) return;
+    try {
+
+      await fetch(`http://localhost:3000/api/temporadas/${id}`, { method: 'DELETE' });
+      mostrarToast('Regla eliminada', 'exito');
+      obtenerTemporadas();
+
+    } catch (error) {
+
+      mostrarToast('Error al eliminar', 'error');
+
+    }
+
+  };
 
   // Función para mostrar notificaciones
   const mostrarToast = (mensaje, tipo = 'exito') => {
@@ -1095,6 +1355,17 @@ function App() {
     }
 
   }, [modoOscuro]);
+
+  if (cargandoApp) {
+
+    return (
+
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a' }}>
+        <p style={{ color: 'white' }}>Cargando sesión...</p>
+      </div>
+      
+    );
+  }
 
 
   // Si no hay usuario logueado, mostramos el Login
@@ -1205,7 +1476,7 @@ function App() {
             <header className="top-bar">
               <div>
                 <h1>Centro de Mando</h1>
-                <p className="fecha">{fechaHoy} | 🕐 Entradas: {configHotel.horaCheckIn} | 🕛 Salidas: {configHotel.horaCheckOut}</p>
+                <p className="fecha">{fechaHoy} | 🕐 Entradas: {datosHotel?.horaCheckIn || '13:00'} | 🕛 Salidas: {datosHotel?.horaCheckOut || '12:00'}</p>
               </div>
             </header>
 
@@ -1232,7 +1503,12 @@ function App() {
                 <h3>🛬 Llegadas Programadas para Hoy</h3>
                 <p className="alert-subtitle">Huéspedes con reserva para la fecha actual</p>
                 <div className="alerts-list">
-                  {llegadasHoy.length > 0 ? (
+                  {cargandoLlegadas ? (
+                    <>
+                      <div className="skeleton-loader"></div>
+                      <div className="skeleton-loader"></div>
+                    </>
+                  ) : llegadasHoy.length > 0 ? (
                     llegadasHoy.map(reserva => (
                       <div key={reserva.id} className="alert-item limpieza">
                         <div className="deuda-info">
@@ -1255,7 +1531,12 @@ function App() {
                 <h3>🛫 Salidas Programadas para Hoy</h3>
                 <p className="alert-subtitle">Huéspedes que deben dejar la habitación hoy</p>
                 <div className="alerts-list">
-                  {salidasHoy.length > 0 ? (
+                  {cargandoSalidas ? (
+                    <>
+                      <div className="skeleton-loader"></div>
+                      <div className="skeleton-loader"></div>
+                    </>
+                  ) : salidasHoy.length > 0 ? (
                     salidasHoy.map(reserva => (
                       <div key={reserva.id} className="alert-item mantenimiento">
                         <div className="deuda-info">
@@ -1456,7 +1737,7 @@ function App() {
                       <p>✉️ {huesped.email}</p>
                     </div>
                     <div className="guest-stats">
-                      <span className="stat-badge">{huesped.reservas.length} Reservas</span>
+                      <span className="stat-badge">{huesped._count?.reservas || 0} Reservas</span>
                       <button className="btn-icon" onClick={(e) => { 
                         e.stopPropagation();
                         setHuespedNotas(huesped); 
@@ -1556,7 +1837,7 @@ function App() {
                       </thead>
                       <tbody>
                         {dashboardData.topHuespedes.map((h, index) => (
-                          <tr key={h.documento}>
+                          <tr key={index}>
                             <td className="vip-name">
                               <span className="vip-medal">{index + 1}</span>
                               {h.nombre}
@@ -1712,7 +1993,12 @@ function App() {
             <header className="top-bar">
               <div>
                 <h1>⚙️ Configuración del Sistema</h1>
-                <p className="fecha">Personaliza tu experiencia</p>
+                <p className="fecha">Personaliza tu experiencia y la de tu hotel</p>
+              </div>
+              <div className="actions-bar">
+                {usuarioLogueado.rol === 'Gerente' && (
+                  <button className="btn-primario" onClick={() => setModalHotelAbierto(true)}>✏️ Editar Datos del Hotel</button>
+                )}
               </div>
             </header>
 
@@ -1732,21 +2018,37 @@ function App() {
               </div>
               
               <div className="config-card">
-                <h3>Próximas Funciones</h3>
-                <div className="config-item">
-                  <div>
-                    <p className="config-title">Gestión de Usuarios 👥</p>
-                    <p className="config-desc">Crear, editar y eliminar recepcionistas y gerentes.</p>
-                  </div>
-                  <span className="badge-select mantenimiento" style={{ minWidth: 'auto' }}>Próximamente</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <h3>📈 Precios Dinámicos y Temporadas</h3>
+                  {usuarioLogueado.rol === 'Gerente' && (
+                    <button className="btn-primario" style={{ padding: '0.5rem 1rem' }} onClick={() => setModalTemporadaAbierto(true)}>+ Nueva Temporada</button>
+                  )}
                 </div>
-                <div className="config-item">
-                  <div>
-                    <p className="config-title">Configuración de Impuestos 💰</p>
-                    <p className="config-desc">Ajustar el porcentaje de IVA aplicado a las facturas.</p>
+                
+                {temporadas.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                    <p>No has creado temporadas. Estás vendiendo a tarifa base.</p>
                   </div>
-                  <span className="badge-select mantenimiento" style={{ minWidth: 'auto' }}>Próximamente</span>
-                </div>
+                ) : (
+                  <div className="temporadas-grid">
+                    {temporadas.map(temp => (
+                      <div key={temp.id} className="temporada-card">
+                        <div className="temporada-header">
+                          <span className={`temporada-badge ${temp.porcentaje > 0 ? 'alta' : 'baja'}`}>
+                            {temp.porcentaje > 0 ? `+${temp.porcentaje}%` : `${temp.porcentaje}%`}
+                          </span>
+                          <h4>{temp.nombre}</h4>
+                          {usuarioLogueado.rol === 'Gerente' && (
+                            <button className="btn-limpiar" style={{ marginLeft: 'auto', padding: '0.2rem 0.4rem' }} onClick={() => handleEliminarTemporada(temp.id)}>✖</button>
+                          )}
+                        </div>
+                        <p className="temporada-fechas">
+                          📅 {new Date(temp.fechaInicio).toLocaleDateString('es-CO')} - {new Date(temp.fechaFin).toLocaleDateString('es-CO')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </>
@@ -1754,10 +2056,10 @@ function App() {
                 
       </main>
 
-      {/* El Modal (Ventana Emergente) */}
+      {/* El Modal Registro Habitación) */}
       {modalAbierto && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+        <div className="modal-overlay" onClick={() => setModalAbierto(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Registrar Nueva Habitación</h2>
               <button className="btn-cerrar" onClick={() => setModalAbierto(false)}>✖</button>
@@ -1765,11 +2067,11 @@ function App() {
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Número de Habitación</label>
-                <input type="text" name="numero" value={formulario.numero} onChange={handleInputChange} required placeholder="Ej: 103" />
+                <input type="text" name="numero" value={formulario.numero} onChange={(e) => setFormulario({...formulario, numero: e.target.value})} placeholder="Ej: 103" />
               </div>
               <div className="form-group">
                 <label>Tipo</label>
-                <select name="tipo" value={formulario.tipo} onChange={handleInputChange}>
+                <select name="tipo" value={formulario.tipo} onChange={(e) => setFormulario({...formulario, tipo: e.target.value})}>
                   <option value="Single">Individual</option>
                   <option value="Double">Doble</option>
                   <option value="Suite">Suite</option>
@@ -1777,7 +2079,7 @@ function App() {
               </div>
               <div className="form-group">
                 <label>Precio Base por Noche ($)</label>
-                <input type="number" name="precioBase" value={formulario.precioBase} onChange={handleInputChange} required placeholder="Ej: 19900" />
+                <input type="number" name="precioBase" required value={formulario.precioBase} onChange={(e) => setFormulario({...formulario, precioBase: e.target.value})} placeholder="Ej: 19900" />
               </div>
               <div className="form-group">
                 <label>Estado Inicial</label>
@@ -1787,7 +2089,7 @@ function App() {
                   <option value="Mantenimiento">Mantenimiento</option>
                 </select>
               </div>
-              <button type="submit" className="btn-primario btn-full">Guardar Habitación</button>
+              <button type="submit" className="btn-primario btn-full">Agregar Habitación</button>
             </form>
           </div>
         </div>
@@ -1867,7 +2169,7 @@ function App() {
                       </div>
                     )}
                     <div className="simulador-fila total">
-                      <span>Total a Cobrar</span>
+                      <span>{simulacionCheckIn.noches} Noche(s) (Tarifa Dinámica)</span>
                       <span>${simulacionCheckIn.total.toLocaleString('es-CO')}</span>
                     </div>
                   </div>
@@ -2051,7 +2353,7 @@ function App() {
                       </div>
                     )}
                     <div className="simulador-fila total">
-                      <span>Total a Cobrar</span>
+                      <span>{simulacionCheckIn.noches} Noche(s) (Tarifa Dinámica)</span>
                       <span>${simulacionReserva.total.toLocaleString('es-CO')}</span>
                     </div>
                   </div>
@@ -2216,6 +2518,164 @@ function App() {
             <button className="btn-primario btn-full" style={{ marginTop: '1rem' }} onClick={handleGuardarNota}>
               💾 Guardar Nota
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Registro de Hotel (Onboarding) */}
+      {/* Modal de Edición de Hotel (Solo Gerentes) */}
+      {modalHotelAbierto && (
+        <div className="modal-overlay" onClick={() => setModalHotelAbierto(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <div className="modal-header">
+              <h2>🏨 Datos del Hotel</h2>
+              <button className="btn-cerrar" onClick={() => setModalHotelAbierto(false)}>✖</button>
+            </div>
+            <form onSubmit={handleGuardarHotel}>
+              
+              {/* Checkbox de seguridad */}
+              <div className="config-item" style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
+                <div>
+                  <p className="config-title">Habilitar Edición</p>
+                  <p className="config-desc">Los datos fiscales son sensibles. Marca para editar.</p>
+                </div>
+                <label className="switch">
+                  <input type="checkbox" checked={editarHotelHabilitado} onChange={(e) => setEditarHotelHabilitado(e.target.checked)} />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="form-group">
+                <label>Nombre Comercial</label>
+                <input type="text" required name="nombre" value={formHotel.nombre || ''} onChange={handleInputHotel} disabled={!editarHotelHabilitado} />
+              </div>
+              
+              <div className="form-group">
+                <label>Razón Social (Legal)</label>
+                <input type="text" required name="razonSocial" value={formHotel.razonSocial || ''} onChange={handleInputHotel} disabled={!editarHotelHabilitado} />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>NIT / RFC / RUT</label>
+                  <input type="text" required name="nit" value={formHotel.nit || ''} onChange={handleInputHotel} disabled={!editarHotelHabilitado} />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Teléfono</label>
+                  <input type="text" name="telefono" value={formHotel.telefono || ''} onChange={handleInputHotel} disabled={!editarHotelHabilitado} />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Dirección</label>
+                <input type="text" required name="direccion" value={formHotel.direccion || ''} onChange={handleInputHotel} disabled={!editarHotelHabilitado} />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>País</label>
+                  <select 
+                    required 
+                    value={Country.getAllCountries().find(c => c.name === formHotel.pais)?.isoCode || ''} 
+                    onChange={(e) => {
+                      const p = Country.getCountryByCode(e.target.value);
+                      setFormHotel({ ...formHotel, pais: p?.name || '', ciudad: '', departamento: '' });
+                    }}
+                    disabled={!editarHotelHabilitado}
+                  >
+                    <option value="">Seleccione...</option>
+                    {Country.getAllCountries().map(p => <option key={p.isoCode} value={p.isoCode}>{p.name}</option>)}
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Departamento</label>
+                  <select 
+                    required 
+                    value={State.getStatesOfCountry(Country.getAllCountries().find(c => c.name === formHotel.pais)?.isoCode).find(s => s.name === formHotel.departamento)?.isoCode || ''} 
+                    onChange={(e) => {
+                      const s = State.getStateByCodeAndCountry(e.target.value, Country.getAllCountries().find(c => c.name === formHotel.pais)?.isoCode);
+                      setFormHotel({ ...formHotel, departamento: s?.name || '', ciudad: '' });
+                    }}
+                    disabled={!editarHotelHabilitado || !formHotel.pais}
+                  >
+                    <option value="">Seleccione...</option>
+                    {formHotel.pais && State.getStatesOfCountry(Country.getAllCountries().find(c => c.name === formHotel.pais)?.isoCode).map(s => <option key={s.isoCode} value={s.isoCode}>{s.name}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Ciudad / Municipio</label>
+                <select 
+                  required 
+                  value={formHotel.ciudad || ''} 
+                  onChange={(e) => setFormHotel({ ...formHotel, ciudad: e.target.value })}
+                  disabled={!editarHotelHabilitado || !formHotel.departamento}
+                >
+                  <option value="">Seleccione...</option>
+                  {formHotel.departamento && City.getCitiesOfState(Country.getAllCountries().find(c => c.name === formHotel.pais)?.isoCode, State.getStatesOfCountry(Country.getAllCountries().find(c => c.name === formHotel.pais)?.isoCode).find(s => s.name === formHotel.departamento)?.isoCode).map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+
+              {/* Autorización por contraseña */}
+              {editarHotelHabilitado && (
+                <div className="form-group">
+                  <label>Contraseña de Autorización</label>
+                  <input type="password" required value={passHotel} onChange={(e) => setPassHotel(e.target.value)} placeholder="Confirma tu contraseña para guardar" />
+                </div>
+              )}
+
+              <button type="submit" className="btn-primario btn-full" disabled={!editarHotelHabilitado || cargandoAccion}>
+                {cargandoAccion ? '⏳ Guardando...' : 'Guardar Cambios'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Temporada */}
+      {modalTemporadaAbierto && (
+        <div className="modal-overlay" onClick={() => setModalTemporadaAbierto(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h2>📈 Nueva Temporada</h2>
+              <button className="btn-cerrar" onClick={() => setModalTemporadaAbierto(false)}>✖</button>
+            </div>
+            <form onSubmit={handleSubmitTemporada}>
+              <div className="form-group">
+                <label>Nombre de la Temporada</label>
+                <input type="text" required value={formTemporada.nombre} onChange={(e) => setFormTemporada({...formTemporada, nombre: e.target.value})} placeholder="Ej: Semana Santa, Festivo, Temporada Alta" />
+              </div>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Fecha Inicio</label>
+                  <input type="date" required value={formTemporada.fechaInicio} onChange={(e) => setFormTemporada({...formTemporada, fechaInicio: e.target.value})} />
+                </div>
+                <div className="form-group" style={{ flex: 1 }}>
+                  <label>Fecha Fin</label>
+                  <input type="date" required value={formTemporada.fechaFin} onChange={(e) => setFormTemporada({...formTemporada, fechaFin: e.target.value})} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Ajuste de Precio (%)</label>
+                <input type="number" required value={formTemporada.porcentaje} onChange={(e) => setFormTemporada({...formTemporada, porcentaje: e.target.value})} placeholder="Ej: 20 para aumentar 20%, -10 para descuento" />
+              </div>
+              <div className="form-group">
+                <label>Días Aplicables</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {['D', 'L', 'M', 'X', 'J', 'V', 'S'].map((dia, index) => (
+                    <label key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formTemporada.diasAplicables.includes(index.toString())} onChange={() => handleDiasChange(index.toString())} />
+                      {dia}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <button type="submit" className="btn-primario btn-full" disabled={cargandoAccion}>
+                {cargandoAccion ? '⏳ Guardando...' : 'Guardar Temporada'}
+              </button>
+            </form>
           </div>
         </div>
       )}

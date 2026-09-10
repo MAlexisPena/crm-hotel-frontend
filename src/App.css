@@ -1579,7 +1579,7 @@ input:checked + .slider { background-color: #2563eb; }
 input:checked + .slider:before { transform: translateX(24px); }
 
 /* === SKELETON LOADERS === */
-.skeleton-loader {
+.skeleton-lista {
   height: 40px;
   background: #e2e8f0;
   border-radius: 8px;
@@ -1781,7 +1781,7 @@ body.dark-mode .room-type { color: #9ca3af; }
 body.dark-mode .precio { color: #e5e7eb; }
 body.dark-mode .precio span { color: #6b7280; }
 
-body.dark-mode .skeleton-loader { background: #374151; animation: pulse-dark 1.5s infinite ease-in-out; }
+body.dark-mode .skeleton-lista { background: #374151; animation: pulse-dark 1.5s infinite ease-in-out; }
 @keyframes pulse-dark { 0% { background: #374151; } 50% { background: #4b5563; } 100% { background: #374151; } }
 
 body.dark-mode .temporada-card { background: #111827; border-color: #374151; }

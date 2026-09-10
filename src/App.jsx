@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 import { Country, State, City } from 'country-state-city';
+import { Toast } from './components/Toast';
+import { SkeletonLista } from './components/SkeletonLista';
 
 function App() {
 
@@ -64,8 +66,7 @@ function App() {
 
   const [cargandoAccion, setCargandoAccion] = useState(false); // Para botones de check-in/out
   const [actualizandoDash, setActualizandoDash] = useState(false); // Para el dashboard
-  const [cargandoLlegadas, setCargandoLlegadas] = useState(true);
-  const [cargandoSalidas, setCargandoSalidas] = useState(true);
+  const [CargandoListas, setCargandoListas] = useState(true);
 
   const [toast, setToast] = useState(null);
 
@@ -582,22 +583,22 @@ function App() {
   // Obtener llegadas de hoy
   const obtenerLlegadasHoy = () => {
 
-    setCargandoLlegadas(true);
+    setCargandoListas(true);
     fetch('http://localhost:3000/api/reservas/hoy')
       .then(res => res.json())
-      .then(data => { setLlegadasHoy(Array.isArray(data) ? data : []); setCargandoLlegadas(false); })
-      .catch(err => { console.error(err); setCargandoLlegadas(false); });
+      .then(data => { setLlegadasHoy(Array.isArray(data) ? data : []); setCargandoListas(false); })
+      .catch(err => { console.error(err); setCargandoListas(false); });
 
   };
 
   // Obtener salidas de hoy
   const obtenerSalidasHoy = () => {
 
-    setCargandoSalidas(true);
+    setCargandoListas(true);
     fetch('http://localhost:3000/api/reservas/salidas-hoy')
       .then(res => res.json())
-      .then(data => { setSalidasHoy(Array.isArray(data) ? data : []); setCargandoSalidas(false); })
-      .catch(err => { console.error(err); setCargandoSalidas(false); });
+      .then(data => { setSalidasHoy(Array.isArray(data) ? data : []); setCargandoListas(false); })
+      .catch(err => { console.error(err); setCargandoListas(false); });
 
   };
 
@@ -1405,14 +1406,7 @@ function App() {
           </form>
 
           {/* Notificación Toast */}
-          {toast && (
-            <div className={`toast-notification ${toast.tipo}`}>
-              <span className="toast-icon">
-                {toast.tipo === 'exito' ? '✅' : '❌'}
-              </span>
-              <span className="toast-message">{toast.mensaje}</span>
-            </div>
-          )}
+          <Toast toast={toast} />
         </div>
       );
     }
@@ -1503,11 +1497,8 @@ function App() {
                 <h3>🛬 Llegadas Programadas para Hoy</h3>
                 <p className="alert-subtitle">Huéspedes con reserva para la fecha actual</p>
                 <div className="alerts-list">
-                  {cargandoLlegadas ? (
-                    <>
-                      <div className="skeleton-loader"></div>
-                      <div className="skeleton-loader"></div>
-                    </>
+                  {CargandoListas ? (
+                    <SkeletonLista />
                   ) : llegadasHoy.length > 0 ? (
                     llegadasHoy.map(reserva => (
                       <div key={reserva.id} className="alert-item limpieza">
@@ -1531,11 +1522,8 @@ function App() {
                 <h3>🛫 Salidas Programadas para Hoy</h3>
                 <p className="alert-subtitle">Huéspedes que deben dejar la habitación hoy</p>
                 <div className="alerts-list">
-                  {cargandoSalidas ? (
-                    <>
-                      <div className="skeleton-loader"></div>
-                      <div className="skeleton-loader"></div>
-                    </>
+                  {CargandoListas ? (
+                    <SkeletonLista/>
                   ) : salidasHoy.length > 0 ? (
                     salidasHoy.map(reserva => (
                       <div key={reserva.id} className="alert-item mantenimiento">
@@ -1572,7 +1560,9 @@ function App() {
                 <h3>🚨 Alertas Operativas</h3>
                 <p className="alert-subtitle">Habitaciones que requieren atención inmediata</p>
                 <div className="alerts-list">
-                  {habitaciones.filter(h => h.estado === 'Limpieza' || h.estado === 'Mantenimiento').length > 0 ? (
+                  {CargandoListas ? (
+                    <SkeletonLista />
+                  ) : habitaciones.filter(h => h.estado === 'Limpieza' || h.estado === 'Mantenimiento').length > 0 ? (
                     habitaciones.filter(h => h.estado === 'Limpieza' || h.estado === 'Mantenimiento').map(hab => (
                       <div key={hab.id} className={`alert-item ${hab.estado.toLowerCase()}`}>
                         <span>Habitación {hab.numero}</span>
@@ -1582,6 +1572,7 @@ function App() {
                   ) : (
                     <p className="no-alerts">✅ Todo en orden. No hay alertas.</p>
                   )}
+                  
                 </div>
               </div>
             </div>
@@ -1602,7 +1593,9 @@ function App() {
                     <h3>⚠️ Pagos Pendientes</h3>
                     <p className="alert-subtitle">Gastos registrados que aún no se han pagado</p>
                     <div className="alerts-list">
-                      {gastosPendientes.length > 0 ? (
+                      {CargandoListas ? (
+                        <SkeletonLista />
+                      ) : gastosPendientes.length > 0 ? (
                         gastosPendientes.map(gasto => (
                           <div key={gasto.id} className="alert-item deuda">
                             <div className="deuda-info">
@@ -2681,14 +2674,7 @@ function App() {
       )}
 
       {/* Notificación Toast */}
-      {toast && (
-        <div className={`toast-notification ${toast.tipo}`}>
-          <span className="toast-icon">
-            {toast.tipo === 'exito' ? '✅' : '❌'}
-          </span>
-          <span className="toast-message">{toast.mensaje}</span>
-        </div>
-      )}
+      <Toast toast={toast} />
     </div>    
   );
 }

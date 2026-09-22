@@ -4,6 +4,9 @@ import { Country, State, City } from 'country-state-city';
 import { Toast } from './components/Toast';
 import { SkeletonLista } from './components/SkeletonLista';
 
+// Dirección del servidor backend
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 function App() {
 
   const [habitaciones, setHabitaciones] = useState([]);
@@ -142,8 +145,8 @@ function App() {
   const obtenerHuespedes = (textoBusqueda = '') => {
 
     const url = textoBusqueda 
-      ? `http://localhost:3000/api/huespedes?q=${textoBusqueda}` 
-      : 'http://localhost:3000/api/huespedes';
+      ? `${API_URL}/api/huespedes?q=${textoBusqueda}` 
+      : API_URL + '/api/huespedes';
     
     fetch(url)
       .then(res => res.json())
@@ -180,7 +183,7 @@ function App() {
   // Función para obtener habitaciones desde el backend
   const obtenerHabitaciones = () => {
 
-    fetch('http://localhost:3000/api/habitaciones')
+    fetch(API_URL + '/api/habitaciones')
       .then(res => res.json())
       .then(data => {
 
@@ -220,7 +223,7 @@ function App() {
     
     try {
 
-      const response = await fetch('http://localhost:3000/api/habitaciones', {
+      const response = await fetch(API_URL + '/api/habitaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -259,7 +262,7 @@ function App() {
 
     try {
 
-      const repsonse = await fetch(`http://localhost:3000/api/habitaciones/${id}`, {
+      const repsonse = await fetch(`${API_URL}/api/habitaciones/${id}`, {
 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -296,7 +299,7 @@ function App() {
 
     try {
 
-      const response = await fetch('http://localhost:3000/api/checkin', {
+      const response = await fetch(API_URL + '/api/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formularioHuesped, habitacionId: habitacionCheckIn })
@@ -338,7 +341,7 @@ function App() {
 
     try {
 
-      const response = await fetch('http://localhost:3000/api/reservas', {
+      const response = await fetch(API_URL + '/api/reservas', {
 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -380,7 +383,7 @@ function App() {
 
     try {
 
-      const response = await fetch('http://localhost:3000/api/gastos', {
+      const response = await fetch(API_URL + '/api/gastos', {
 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -419,7 +422,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`http://localhost:3000/api/gastos/${id}/pagar`, { method: 'PUT' });
+      const response = await fetch(`${API_URL}/api/gastos/${id}/pagar`, { method: 'PUT' });
 
       if (response.ok) {
 
@@ -447,7 +450,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`http://localhost:3000/api/huespedes/documento/${documento}`);
+      const response = await fetch(`${API_URL}/api/huespedes/documento/${documento}`);
 
       if (response.ok) {
 
@@ -492,7 +495,7 @@ function App() {
 
     if (habitacionCheckIn && formularioHuesped.fechaCheckOut) {
 
-      fetch('http://localhost:3000/api/calcular-precio', {
+      fetch(API_URL + '/api/calcular-precio', {
 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -538,7 +541,7 @@ function App() {
 
     if (formularioReserva.habitacionId && formularioReserva.fechaCheckIn && formularioReserva.fechaCheckOut) {
 
-      fetch('http://localhost:3000/api/calcular-precio', {
+      fetch(API_URL + '/api/calcular-precio', {
 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -584,7 +587,7 @@ function App() {
   const obtenerLlegadasHoy = () => {
 
     setCargandoListas(true);
-    fetch('http://localhost:3000/api/reservas/hoy')
+    fetch(API_URL + '/api/reservas/hoy')
       .then(res => res.json())
       .then(data => { setLlegadasHoy(Array.isArray(data) ? data : []); setCargandoListas(false); })
       .catch(err => { console.error(err); setCargandoListas(false); });
@@ -595,7 +598,7 @@ function App() {
   const obtenerSalidasHoy = () => {
 
     setCargandoListas(true);
-    fetch('http://localhost:3000/api/reservas/salidas-hoy')
+    fetch(API_URL + '/api/reservas/salidas-hoy')
       .then(res => res.json())
       .then(data => { setSalidasHoy(Array.isArray(data) ? data : []); setCargandoListas(false); })
       .catch(err => { console.error(err); setCargandoListas(false); });
@@ -607,7 +610,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`http://localhost:3000/api/huespedes/${huespedNotas.id}/notas`, {
+      const response = await fetch(`${API_URL}/api/huespedes/${huespedNotas.id}/notas`, {
 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -638,7 +641,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`http://localhost:3000/api/checkout/${id}`, { method: 'PUT' });
+      const response = await fetch(`${API_URL}/api/checkout/${id}`, { method: 'PUT' });
       const data = await response.json(); 
       
       if (response.ok) {
@@ -689,7 +692,7 @@ function App() {
   // Obtener todas las reservas
   const obtenerTodasReservas = () => {
 
-    fetch('http://localhost:3000/api/reservas')
+    fetch(API_URL + '/api/reservas')
       .then(res => res.json())
       .then(data => setTodasReservas(Array.isArray(data) ? data : []))
       .catch(err => console.error(err));
@@ -712,7 +715,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`http://localhost:3000/api/reservas/${id}/checkin`, { method: 'PUT' });
+      const response = await fetch(`${API_URL}/api/reservas/${id}/checkin`, { method: 'PUT' });
       const data = await response.json();
       
       if (response.ok) {
@@ -741,7 +744,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`http://localhost:3000/api/reservas/${id}/estado`, {
+      const response = await fetch(`${API_URL}/api/reservas/${id}/estado`, {
 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -869,7 +872,7 @@ function App() {
 
     try {
 
-      const response = await fetch(`http://localhost:3000/api/reservas/${reservaACancelar.id}/cancelar`, {
+      const response = await fetch(`${API_URL}/api/reservas/${reservaACancelar.id}/cancelar`, {
 
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -999,7 +1002,7 @@ function App() {
   // Cargar usuario desde memoria al recargar la página
   useEffect(() => {
 
-    fetch('http://localhost:3000/api/auth/me', { credentials: 'include' })
+    fetch(API_URL + '/api/auth/me', { credentials: 'include' })
       .then(res => {
 
           if (!res.ok) throw new Error('No autenticado');
@@ -1029,7 +1032,7 @@ function App() {
 
     try {
 
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch(API_URL + '/api/auth/login', {
 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1063,7 +1066,7 @@ function App() {
 
     try {
 
-      await fetch('http://localhost:3000/api/auth/logout', {
+      await fetch(API_URL + '/api/auth/logout', {
 
         method: 'POST',
         credentials: 'include'
@@ -1094,7 +1097,7 @@ function App() {
   useEffect(() => {
     if (vistaActual === 'dashboard' && usuarioLogueado?.rol === 'Gerente') {
       setActualizandoDash(true);
-      let url = 'http://localhost:3000/api/dashboard';
+      let url = API_URL + '/api/dashboard';
       if (dashFechaInicio && dashFechaFin) {
         url += `?inicio=${dashFechaInicio}&fin=${dashFechaFin}`;
       }
@@ -1122,7 +1125,7 @@ function App() {
 
     if (usuarioLogueado?.rol === 'Gerente') {
 
-      fetch('http://localhost:3000/api/gastos/pendientes')
+      fetch(API_URL + '/api/gastos/pendientes')
         .then(res => res.json())
         .then(data => setGastosPendientes(data))
         .catch(err => console.error(err));
@@ -1155,7 +1158,7 @@ function App() {
     setCargandoAccion(true);
     try {
 
-      const response = await fetch('http://localhost:3000/api/hotel', {
+      const response = await fetch(API_URL + '/api/hotel', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1210,7 +1213,7 @@ function App() {
   // === TEMPORADAS ===
   const obtenerTemporadas = () => {
 
-    fetch('http://localhost:3000/api/temporadas')
+    fetch(API_URL + '/api/temporadas')
       .then(res => res.json())
       .then(data => setTemporadas(Array.isArray(data) ? data : []))
       .catch(err => console.error(err));
@@ -1242,7 +1245,7 @@ function App() {
     setCargandoAccion(true);
     try {
 
-      const response = await fetch('http://localhost:3000/api/temporadas', {
+      const response = await fetch(API_URL + '/api/temporadas', {
 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1275,7 +1278,7 @@ function App() {
     if (!window.confirm('¿Eliminar esta regla de precios?')) return;
     try {
 
-      await fetch(`http://localhost:3000/api/temporadas/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/api/temporadas/${id}`, { method: 'DELETE' });
       mostrarToast('Regla eliminada', 'exito');
       obtenerTemporadas();
 
@@ -1399,10 +1402,12 @@ function App() {
 
             <button type="submit" className="btn-primario btn-full">Ingresar</button>
             
-            <div className="login-hint">
-              <p><strong>Gerente:</strong> gerente@hotel.com / gerente123</p>
-              <p><strong>Recepción:</strong> recepcion@hotel.com / recep123</p>
-            </div>
+            {import.meta.env.DEV && (
+              <div className="login-hint">
+                <p><strong>Gerente:</strong> gerente@hotelprueba.com / gerente123</p>
+                <p><strong>Recepción:</strong> recepcion@hotelprueba.com / recep123</p>
+              </div>
+            )}
           </form>
 
           {/* Notificación Toast */}

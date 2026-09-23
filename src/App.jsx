@@ -205,9 +205,13 @@ function App() {
   // Cargar habitaciones al iniciar la app
   useEffect(() => {
 
-    obtenerHabitaciones();
+    if (usuarioLogueado) {
 
-  }, []);
+      obtenerHabitaciones();
+
+    }
+
+  }, [usuarioLogueado]);
 
   // Función para manejar los cambios en los inputs del formulario
   const handleInputChange = (e) => {
@@ -583,25 +587,40 @@ function App() {
     
   }, [formularioReserva.habitacionId, formularioReserva.fechaCheckIn, formularioReserva.fechaCheckOut, formularioReserva.descuento]);
 
-  // Obtener llegadas de hoy
-  const obtenerLlegadasHoy = () => {
 
-    setCargandoListas(true);
-    fetch(API_URL + '/api/reservas/hoy')
-      .then(res => res.json())
-      .then(data => { setLlegadasHoy(Array.isArray(data) ? data : []); setCargandoListas(false); })
-      .catch(err => { console.error(err); setCargandoListas(false); });
+  // Carga el resumen de inicio (llegadas + salidas EN PARALELO, con un solo interruptor)
+  const cargarResumenInicio = async () => {
 
-  };
+    setCargandoListas(true); // Encendemos el indicador UNA sola vez
 
-  // Obtener salidas de hoy
-  const obtenerSalidasHoy = () => {
+    try {
 
-    setCargandoListas(true);
-    fetch(API_URL + '/api/reservas/salidas-hoy')
-      .then(res => res.json())
-      .then(data => { setSalidasHoy(Array.isArray(data) ? data : []); setCargandoListas(false); })
-      .catch(err => { console.error(err); setCargandoListas(false); });
+      // Promise.all = lanzar los dos repartidores a la vez y esperar a que AMBOS lleguen
+      const [resLlegadas, resSalidas] = await Promise.all([
+        fetch(`${API_URL}/api/reservas/hoy`),
+        fetch(`${API_URL}/api/reservas/salidas-hoy`)
+      ]);
+
+      const [llegadas, salidas] = await Promise.all([
+        resLlegadas.json(),
+        resSalidas.json()
+      ]);
+
+      setLlegadasHoy(Array.isArray(llegadas) ? llegadas : []);
+      setSalidasHoy(Array.isArray(salidas) ? salidas : []);
+
+    } catch (err) {
+
+      console.error('Error al cargar el resumen de inicio:', err);
+      setLlegadasHoy([]);
+      setSalidasHoy([]);
+
+    } finally {
+
+      // finally = pase lo que pase (éxito o error), el indicador se apaga SIEMPRE
+      setCargandoListas(false);
+
+    }
 
   };
 
@@ -652,8 +671,7 @@ function App() {
           setFacturaVisible(true);
           obtenerHabitaciones();
           obtenerTodasReservas();
-          obtenerLlegadasHoy();
-          obtenerSalidasHoy();
+          cargarResumenInicio(); // Actualizamos llegadas y salidas
           mostrarToast('Factura generada con éxito', 'exito');
 
         }
@@ -680,14 +698,13 @@ function App() {
   // Actualizar llegadas de hoy cada vez que se entra a la vista de inicio
   useEffect(() => {
 
-    if (vistaActual === 'inicio') {
+    if (vistaActual === 'inicio' && usuarioLogueado) {
 
-      obtenerLlegadasHoy();
-      obtenerSalidasHoy();
+      cargarResumenInicio(); // Carga llegadas y salidas en paralelo
 
     }
 
-  }, [vistaActual]);
+  }, [vistaActual, usuarioLogueado]);
 
   // Obtener todas las reservas
   const obtenerTodasReservas = () => {
@@ -723,8 +740,7 @@ function App() {
         mostrarToast('Check-in realizado con éxito', 'exito');
         obtenerTodasReservas(); // Actualizamos la lista de reservas
         obtenerHabitaciones(); // Actualizamos el estado de las habitaciones
-        obtenerLlegadasHoy(); // Actualizamos la lista de llegadas de hoy
-        obtenerSalidasHoy(); // Actualizamos la lista de salidas de hoy
+        cargarResumenInicio(); // Actualizamos llegadas y salidas
 
       } else {
 
@@ -1511,7 +1527,7 @@ function App() {
                           <span>{reserva.huesped.nombre} {reserva.huesped.apellido}</span>
                           <span className="alert-status">Hab {reserva.habitacion.numero}</span>
                         </div>
-                        <button className="btn-magic-checkin" style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} onClick={() => { handleMagicCheckin(reserva.id); obtenerSalidasHoy(); }}>
+                        <button className="btn-magic-checkin" style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem' }} onClick={() => { handleMagicCheckin(reserva.id)}}>
                           🛎️ Check-in
                         </button>
                         <span className="alert-status">{reserva.estado}</span>

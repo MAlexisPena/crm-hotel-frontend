@@ -2265,9 +2265,18 @@ function App() {
         <div className="modal-overlay" onClick={() => setFacturaVisible(false)}>
           <div className="modal-content invoice-modal" onClick={(e) => e.stopPropagation()}>
             <div className="invoice-header">
-              <h2>🏨 HotelCRM</h2>
+              <h2>🏨 {datosFactura.hotel?.nombre || 'HotelCRM'}</h2>
               <button className="btn-cerrar" onClick={() => setFacturaVisible(false)}>✖</button>
             </div>
+
+            {datosFactura.hotel && (
+              <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.5rem' }}>
+                <p>{datosFactura.hotel.razonSocial} - NIT {datosFactura.hotel.nit}</p>
+                {datosFactura.hotel.direccion && (
+                  <p>{datosFactura.hotel.direccion}{datosFactura.hotel.ciudad ? `, ${datosFactura.hotel.ciudad}` : ''}</p>
+                )}
+              </div>
+            )}
             
             <div className="invoice-title">
               <h3>Recibo de Pago</h3>
@@ -2292,7 +2301,7 @@ function App() {
                 <span>${datosFactura.subtotal.toLocaleString('es-CO')}</span>
               </div>
               <div className="invoice-row">
-                <span>IVA (19%)</span>
+                <span>IVA ({datosFactura.ivaPorcentaje}%)</span>
                 <span>${datosFactura.iva.toLocaleString('es-CO')}</span>
               </div>
               <div className="invoice-row total">

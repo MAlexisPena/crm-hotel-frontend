@@ -1097,6 +1097,63 @@ function App() {
 
   }, [vistaActual]);
 
+  // 🛡️ Guarda de vista: solo el Gerente puede estar en el Dashboard.
+  // Si alguien más aterriza ahí (localStorage viejo, pestaña desincronizada), lo mandamos a Inicio.
+  useEffect(() => {
+
+    if (vistaActual === 'dashboard' && usuarioLogueado && usuarioLogueado.rol !== 'Gerente') {
+
+      setVistaActual('inicio');
+
+    }
+
+  }, [vistaActual, usuarioLogueado]);
+
+  // 🔄 Re-sincronización de sesión: cuando la pestaña recupera el foco, pregunta al servidor
+  // si la cookie sigue siendo de este usuario (otra pestaña pudo hacer login/logout).
+  useEffect(() => {
+
+    if (!usuarioLogueado) return;
+
+    const verificarSesion = async () => {
+
+      try {
+
+        const res = await fetch(`${API_URL}/api/auth/me`, { credentials: 'include' });
+
+        if (res.status === 401 || res.status === 403) {
+
+          // El servidor dijo CLARAMENTE que la sesión no vale → cerrar sesión local
+          setUsuarioLogueado(null);
+          setDatosHotel(null);
+          setVistaActual('inicio');
+
+        } else if (res.ok) {
+
+          const data = await res.json();
+
+          // Si la cookie ahora pertenece a OTRO usuario, actualizamos nuestra pantalla
+          setUsuarioLogueado(prev => (prev && prev.id !== data.usuario.id) ? data.usuario : prev);
+          setDatosHotel(data.hotel);
+
+        }
+
+        // Cualquier otro código (500, backend dormido...): no tocamos nada.
+        // No deslogueamos a alguien por un problema de conexión.
+
+      } catch {
+
+        // Error de red (backend apagado): beneficio de la duda, no hacemos nada.
+
+      }
+
+    };
+
+    window.addEventListener('focus', verificarSesion);
+    return () => window.removeEventListener('focus', verificarSesion);
+
+  }, [usuarioLogueado]);
+
   // Obtener datos del dashboard cuando se entra a la vista
   useEffect(() => {
     if (vistaActual === 'dashboard' && usuarioLogueado?.rol === 'Gerente') {

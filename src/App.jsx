@@ -2220,14 +2220,14 @@ const [simulacionReserva, setSimulacionReserva] = useState({ noches: 0, precioBa
                   <div className="simulador-caja">
 
                     <div className="simulador-fila">
-                      <span>{simulacionCheckIn.noches} Noche(s) × ${(simulacionCheckIn.noches > 0 ? simulacionCheckIn.subtotal / simulacionCheckIn.noches : 0).toLocaleString('es-CO')}</span>
-                      <span>${simulacionCheckIn.subtotal.toLocaleString('es-CO')}</span>
+                      <span>{simulacionCheckIn.noches} Noche(s) × ${simulacionCheckIn.precioBase.toLocaleString('es-CO')}</span>
+                      <span>${simulacionCheckIn.subtotalBase.toLocaleString('es-CO')}</span>
                     </div>
 
                     {simulacionCheckIn.nombreTemporada && (
-                      <div className="simulador-fila" style={{ color: '#f59e0b' }}>
-                        <span>Tarifa especial: {simulacionCheckIn.nombreTemporada}</span>
-                        <span>—</span>
+                      <div className="simulador-fila" style={{ color: simulacionCheckIn.ajusteTemporada > 0 ? '#059669' : '#dc2626' }}>
+                        <span>Tarifa pico: {simulacionCheckIn.nombreTemporada} ({simulacionCheckIn.porcentajeTemporada > 0 ? '+' : ''}{simulacionCheckIn.porcentajeTemporada}%)</span>
+                        <span>{simulacionCheckIn.ajusteTemporada > 0 ? '+' : '-'}${Math.abs(simulacionCheckIn.ajusteTemporada).toLocaleString('es-CO')}</span>
                       </div>
                     )}
 
@@ -2442,7 +2442,7 @@ const [simulacionReserva, setSimulacionReserva] = useState({ noches: 0, precioBa
                   {/* 2. El AJUSTE de temporada (cuánto sumó o quitó) */}
                   {simulacionReserva.nombreTemporada && (
                     <div className="simulador-fila" style={{ color: simulacionReserva.ajusteTemporada >= 0 ? '#059669' : '#dc2626' }}>
-                      <span>🎯 {simulacionReserva.nombreTemporada} ({simulacionReserva.porcentajeTemporada > 0 ? '+' : ''}{simulacionReserva.porcentajeTemporada}%)</span>
+                      <span>Tarifa pico: {simulacionReserva.nombreTemporada} ({simulacionReserva.porcentajeTemporada > 0 ? '+' : ''}{simulacionReserva.porcentajeTemporada}%)</span>
                       <span>{simulacionReserva.ajusteTemporada >= 0 ? '+' : '-'}${Math.abs(simulacionReserva.ajusteTemporada).toLocaleString('es-CO')}</span>
                     </div>
                   )}

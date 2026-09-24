@@ -357,7 +357,7 @@ function App() {
 
         mostrarToast('Reserva agendada con éxito', 'exito');
         setModalReservaAbierto(false);
-        setFormularioReserva({ habitacionId: '', fechaCheckIn: '', fechaCheckOut: '', tipoDocumento: 'Cédula', numeroDocumento: '', nombre: '', apellido: '', email: '', telefono: '', descuento: '', estaodo: 'Pendiente' });
+        setFormularioReserva({ habitacionId: '', fechaCheckIn: '', fechaCheckOut: '', tipoDocumento: 'Cédula', numeroDocumento: '', nombre: '', apellido: '', email: '', telefono: '', descuento: '', estado: 'Pendiente' });
         obtenerTodasReservas();
 
       } else {

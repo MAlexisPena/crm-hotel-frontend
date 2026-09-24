@@ -472,18 +472,6 @@ function App() {
 
         }));
 
-      } else {
-        
-        setFormulario(prev => ({
-          
-          ...prev,
-          nombre: '',
-          apellido: '',
-          email: '',
-          telefono: ''
-
-        }));
-
       }
 
     } catch (error) {

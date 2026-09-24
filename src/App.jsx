@@ -88,8 +88,8 @@ function App() {
     estado: 'Confirmada'
   });
 
-  const [simulacionCheckIn, setSimulacionCheckIn] = useState({ noches: 1, total: 0 });
-  const [simulacionReserva, setSimulacionReserva] = useState({ noches: 0, total: 0 });
+const [simulacionCheckIn, setSimulacionCheckIn] = useState({ noches: 0, precioBase: 0, subtotalBase: 0, nombreTemporada: null, porcentajeTemporada: null, ajusteTemporada: 0, descuento: 0, totalSinIva: 0, ivaPorcentaje: 0, iva: 0, totalConIva: 0, detalleNoches: [] });
+const [simulacionReserva, setSimulacionReserva] = useState({ noches: 0, precioBase: 0, subtotalBase: 0, nombreTemporada: null, porcentajeTemporada: null, ajusteTemporada: 0, descuento: 0, totalSinIva: 0, ivaPorcentaje: 0, iva: 0, totalConIva: 0, detalleNoches: [] });
 
   const [cargandoCheckOutId, setCargandoCheckOutId] = useState(null);
 
@@ -505,7 +505,7 @@ function App() {
         .then(res => res.json())
         .then(data => {
           
-          if (data && data.total !== undefined) {
+          if (data && data.totalConIva !== undefined) {
 
             setSimulacionCheckIn(data);
 
@@ -552,7 +552,7 @@ function App() {
         .then(data => {
 
           
-          if (data && data.total !== undefined) {
+          if (data && data.totalConIva !== undefined) {
 
             setSimulacionReserva(data);
 
@@ -2215,22 +2215,44 @@ function App() {
                 </div>
 
                 {/* Simulador en Vivo */}
+                {/* Simulador en Vivo — la verdad completa, sin sorpresas en caja */}
                 {formularioHuesped.fechaCheckOut && (
                   <div className="simulador-caja">
+
                     <div className="simulador-fila">
-                      <span>{simulacionCheckIn.noches} Noche(s) × ${habitaciones.find(h => h.id === habitacionCheckIn)?.precioBase.toLocaleString('es-CO') || 0}</span>
-                      <span>${((habitaciones.find(h => h.id === habitacionCheckIn)?.precioBase || 0) * simulacionCheckIn.noches).toLocaleString('es-CO')}</span>
+                      <span>{simulacionCheckIn.noches} Noche(s) × ${(simulacionCheckIn.noches > 0 ? simulacionCheckIn.subtotal / simulacionCheckIn.noches : 0).toLocaleString('es-CO')}</span>
+                      <span>${simulacionCheckIn.subtotal.toLocaleString('es-CO')}</span>
                     </div>
-                    {formularioHuesped.descuento && (
-                      <div className="simulador-fila descuento">
-                        <span>Descuento</span>
-                        <span>-${parseFloat(formularioHuesped.descuento).toLocaleString('es-CO')}</span>
+
+                    {simulacionCheckIn.nombreTemporada && (
+                      <div className="simulador-fila" style={{ color: '#f59e0b' }}>
+                        <span>Tarifa especial: {simulacionCheckIn.nombreTemporada}</span>
+                        <span>—</span>
                       </div>
                     )}
-                    <div className="simulador-fila total">
-                      <span>{simulacionCheckIn.noches} Noche(s) (Tarifa Dinámica)</span>
-                      <span>${simulacionCheckIn.total.toLocaleString('es-CO')}</span>
+
+                    {simulacionCheckIn.descuento > 0 && (
+                      <div className="simulador-fila descuento">
+                        <span>Descuento</span>
+                        <span>-${simulacionCheckIn.descuento.toLocaleString('es-CO')}</span>
+                      </div>
+                    )}
+
+                    <div className="simulador-fila">
+                      <span>Subtotal (sin IVA)</span>
+                      <span>${simulacionCheckIn.totalSinIva.toLocaleString('es-CO')}</span>
                     </div>
+
+                    <div className="simulador-fila">
+                      <span>IVA ({simulacionCheckIn.ivaPorcentaje}%)</span>
+                      <span>${simulacionCheckIn.iva.toLocaleString('es-CO')}</span>
+                    </div>
+
+                    <div className="simulador-fila total">
+                      <span>TOTAL A PAGAR</span>
+                      <span>${simulacionCheckIn.totalConIva.toLocaleString('es-CO')}</span>
+                    </div>
+
                   </div>
                 )}
               </div>
@@ -2408,24 +2430,50 @@ function App() {
                   </select>
                 </div>
 
-                {formularioReserva.fechaCheckIn && formularioReserva.fechaCheckOut && (
-                  <div className="simulador-caja">
-                    <div className="simulador-fila">
-                      <span>{simulacionReserva.noches} Noche(s) × ${habitaciones.find(h => h.id === parseInt(formularioReserva.habitacionId))?.precioBase.toLocaleString('es-CO') || 0}</span>
-                      <span>${((habitaciones.find(h => h.id === parseInt(formularioReserva.habitacionId))?.precioBase || 0) * simulacionReserva.noches).toLocaleString('es-CO')}</span>
-                    </div>
-                    {formularioReserva.descuento && (
-                      <div className="simulador-fila descuento">
-                        <span>Descuento</span>
-                        <span>-${parseFloat(formularioReserva.descuento).toLocaleString('es-CO')}</span>
-                      </div>
-                    )}
-                    <div className="simulador-fila total">
-                      <span>{simulacionCheckIn.noches} Noche(s) (Tarifa Dinámica)</span>
-                      <span>${simulacionReserva.total.toLocaleString('es-CO')}</span>
-                    </div>
+                {/* Simulador — orden contable: original + temporada - descuento = subtotal → IVA → TOTAL */}
+                <div className="simulador-caja">
+
+                  {/* 1. El ORIGINAL (precio base × noches) */}
+                  <div className="simulador-fila">
+                    <span>{simulacionReserva.noches} Noche(s) × ${simulacionReserva.precioBase.toLocaleString('es-CO')}</span>
+                    <span>${simulacionReserva.subtotalBase.toLocaleString('es-CO')}</span>
                   </div>
-                )}
+
+                  {/* 2. El AJUSTE de temporada (cuánto sumó o quitó) */}
+                  {simulacionReserva.nombreTemporada && (
+                    <div className="simulador-fila" style={{ color: simulacionReserva.ajusteTemporada >= 0 ? '#059669' : '#dc2626' }}>
+                      <span>🎯 {simulacionReserva.nombreTemporada} ({simulacionReserva.porcentajeTemporada > 0 ? '+' : ''}{simulacionReserva.porcentajeTemporada}%)</span>
+                      <span>{simulacionReserva.ajusteTemporada >= 0 ? '+' : '-'}${Math.abs(simulacionReserva.ajusteTemporada).toLocaleString('es-CO')}</span>
+                    </div>
+                  )}
+
+                  {/* 3. El DESCUENTO */}
+                  {simulacionReserva.descuento > 0 && (
+                    <div className="simulador-fila descuento">
+                      <span>Descuento</span>
+                      <span>-${simulacionReserva.descuento.toLocaleString('es-CO')}</span>
+                    </div>
+                  )}
+
+                  {/* 4. SUBTOTAL */}
+                  <div className="simulador-fila">
+                    <span>Subtotal (sin IVA)</span>
+                    <span>${simulacionReserva.totalSinIva.toLocaleString('es-CO')}</span>
+                  </div>
+
+                  {/* 5. IVA */}
+                  <div className="simulador-fila">
+                    <span>IVA ({simulacionReserva.ivaPorcentaje}%)</span>
+                    <span>${simulacionReserva.iva.toLocaleString('es-CO')}</span>
+                  </div>
+
+                  {/* 6. TOTAL = lo que la caja cobrará */}
+                  <div className="simulador-fila total">
+                    <span>TOTAL A PAGAR</span>
+                    <span>${simulacionReserva.totalConIva.toLocaleString('es-CO')}</span>
+                  </div>
+
+                </div>
               </div>
 
               {/* COLUMNA DERECHA: Datos del Huésped */}

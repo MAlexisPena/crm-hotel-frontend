@@ -452,75 +452,107 @@ function App() {
   };
 
   // Simulación de Check-in en tiempo real
+  // Simulación de Reserva en tiempo real (con debounce y cancelación de peticiones viejas)
   useEffect(() => {
-    if (habitacionCheckIn && formularioHuesped.fechaCheckOut) {
-      fetch(API_URL + "/api/calcular-precio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          habitacionId: habitacionCheckIn,
-          fechaCheckIn: new Date().toISOString(), // Hoy
-          fechaCheckOut: formularioHuesped.fechaCheckOut,
-          descuento: formularioHuesped.descuento,
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.totalConIva !== undefined) {
-            setSimulacionCheckIn(data);
-          } else {
-            console.error("Error en cálculo del backend:", data);
-            setSimulacionCheckIn({ noches: 0, subtotal: 0, total: 0 });
-          }
-        })
-        .catch((err) => {
-          console.error("Error de red:", err);
-          setSimulacionCheckIn({ noches: 0, subtotal: 0, total: 0 });
-        });
-    }
-  }, [
-    habitacionCheckIn,
-    formularioHuesped.fechaCheckOut,
-    formularioHuesped.descuento,
-  ]);
 
-  // Simulación de Reserva en tiempo real
-  useEffect(() => {
-    if (
-      formularioReserva.habitacionId &&
-      formularioReserva.fechaCheckIn &&
-      formularioReserva.fechaCheckOut
-    ) {
-      fetch(API_URL + "/api/calcular-precio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          habitacionId: formularioReserva.habitacionId,
-          fechaCheckIn: formularioReserva.fechaCheckIn,
-          fechaCheckOut: formularioReserva.fechaCheckOut,
-          descuento: formularioReserva.descuento,
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.totalConIva !== undefined) {
-            setSimulacionReserva(data);
-          } else {
-            console.error("Error en cálculo del backend:", data);
-            setSimulacionReserva({ noches: 0, subtotal: 0, total: 0 });
-          }
+    if (formularioHuesped.habitacionId && formularioHuesped.fechaCheckIn && formularioHuesped.fechaCheckOut) {
+
+      const controller = new AbortController();
+
+      const timer = setTimeout(() => {
+
+        fetch(`${API_URL}/api/calcular-precio`, {
+
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+
+            habitacionId: formularioHuesped.habitacionId,
+            fechaCheckIn: formularioHuesped.fechaCheckIn,
+            fechaCheckOut: formularioHuesped.fechaCheckOut,
+            descuento: formularioHuesped.descuento
+
+          }),
+          signal: controller.signal // ← la orden de "puedo ser cancelado en vuelo"
+
         })
-        .catch((err) => {
-          console.error("Error de red:", err);
-          setSimulacionReserva({ noches: 0, subtotal: 0, total: 0 });
-        });
+          .then(res => res.json())
+          .then(data => {
+
+            if (data && data.totalConIva !== undefined) {
+              setSimulacionHuesped(data);
+            }
+
+          })
+          .catch(err => {
+
+            if (err.name !== 'AbortError') { // Las cancelaciones NO son errores
+              console.error('Error de red:', err);
+            }
+
+          });
+
+      }, 400); // ← espera 400ms después de tu última tecla
+
+      return () => {
+        clearTimeout(timer);
+        controller.abort(); // ← si algo cambió, cancela lo viejo ANTES de que responda
+      };
+
     }
-  }, [
-    formularioReserva.habitacionId,
-    formularioReserva.fechaCheckIn,
-    formularioReserva.fechaCheckOut,
-    formularioReserva.descuento,
-  ]);
+
+  }, [habitacionCheckIn, formularioHuesped.fechaCheckOut, formularioHuesped.descuento]);
+
+    // Simulación de Reserva en tiempo real (con debounce y cancelación de peticiones viejas)
+  useEffect(() => {
+
+    if (formularioReserva.habitacionId && formularioReserva.fechaCheckIn && formularioReserva.fechaCheckOut) {
+
+      const controller = new AbortController();
+
+      const timer = setTimeout(() => {
+
+        fetch(`${API_URL}/api/calcular-precio`, {
+
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+
+            habitacionId: formularioReserva.habitacionId,
+            fechaCheckIn: formularioReserva.fechaCheckIn,
+            fechaCheckOut: formularioReserva.fechaCheckOut,
+            descuento: formularioReserva.descuento
+
+          }),
+          signal: controller.signal // ← la orden de "puedo ser cancelado en vuelo"
+
+        })
+          .then(res => res.json())
+          .then(data => {
+
+            if (data && data.totalConIva !== undefined) {
+              setSimulacionReserva(data);
+            }
+
+          })
+          .catch(err => {
+
+            if (err.name !== 'AbortError') { // Las cancelaciones NO son errores
+              console.error('Error de red:', err);
+            }
+
+          });
+
+      }, 400); // ← espera 400ms después de tu última tecla
+
+      return () => {
+        clearTimeout(timer);
+        controller.abort(); // ← si algo cambió, cancela lo viejo ANTES de que responda
+      };
+
+    }
+
+  }, [formularioReserva.habitacionId, formularioReserva.fechaCheckIn, formularioReserva.fechaCheckOut, formularioReserva.descuento]);
 
   // Carga el resumen de inicio (llegadas + salidas EN PARALELO, con un solo interruptor)
   const cargarResumenInicio = async () => {
@@ -722,6 +754,17 @@ function App() {
       month: "2-digit",
       year: "numeric",
     });
+  };
+
+  // Precio mostrado en la lista: lo que el cliente pagará (con IVA).
+  // Las Finalizadas ya lo incluyen (el checkout lo sumó); las activas aún no.
+  const precioMostradoReserva = (r) => {
+
+    if (r.estado === 'Finalizada') return r.precioTotal;
+
+    const ivaPorcentaje = datosHotel?.ivaPorcentaje ?? 19;
+    return Math.round(r.precioTotal * (1 + ivaPorcentaje / 100));
+
   };
 
   // Lógica de filtrado y paginación
@@ -2053,7 +2096,10 @@ function App() {
 
                     {/* Columna 3: Precio */}
                     <div className="res-price">
-                      ${reserva.precioTotal.toLocaleString("es-CO")}
+                      ${precioMostradoReserva(reserva).toLocaleString("es-CO")}
+                      {reserva.estado !== 'Finalizada' && (
+                        <span style={{ display:'block', fontSize: '0.65rem', color: '#94a3b8', fontWeight: 400 }}>IVA incl.</span>
+                      )}
                     </div>
 
                     {/* Columna 4: Estado */}

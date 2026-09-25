@@ -714,86 +714,208 @@ body {
 }
 
 /* === MODAL DE FACTURA === */
-.invoice-modal {
+/* ============ FACTURA PREMIUM (Opción B) ============ */
+
+.factura-premium-modal {
   max-width: 480px;
-  border-top: 6px solid #2563eb;
+  padding: 0 !important;
+  overflow: hidden;
+  background: #ffffff;
 }
 
-.invoice-header {
+.fp-cerrar {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.fp-header {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+  padding: 1.5rem 1.5rem 1.25rem;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #f1f5f9;
-  padding-bottom: 1rem;
-  margin-bottom: 1rem;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
-.invoice-header h2 { margin: 0; color: #0f172a; }
-
-.invoice-title {
-  text-align: center;
-  margin-bottom: 1.5rem;
+.fp-header-hotel h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.3rem;
+  color: white;
 }
 
-.invoice-title h3 {
+.fp-header-hotel p {
   margin: 0;
-  font-size: 1.5rem;
-  color: #1e293b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  opacity: 0.85;
+  line-height: 1.5;
 }
 
-.invoice-title p {
-  margin: 0.25rem 0 0 0;
-  color: #16a34a; /* Verde de éxito */
-  font-weight: 600;
-  font-size: 0.9rem;
+.fp-header-factura {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
 }
 
-.invoice-guest {
-  background: #f8fafc;
-  padding: 1rem;
+.fp-numero {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 0.35rem 0.8rem;
   border-radius: 8px;
-  margin-bottom: 1.5rem;
-  border-left: 4px solid #1e293b;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  white-space: nowrap;
 }
 
-.invoice-guest p { margin: 0.25rem 0; font-size: 0.95rem; }
-.invoice-guest strong { color: #0f172a; }
-
-.invoice-table {
-  margin-bottom: 1.5rem;
+.fp-estado {
+  background: #059669;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  letter-spacing: 1px;
 }
 
-.invoice-row {
+.fp-cliente {
   display: flex;
   justify-content: space-between;
-  padding: 0.75rem 0;
-  border-bottom: 1px dashed #cbd5e1;
-  font-size: 0.95rem;
-  color: #334155;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px dashed #e2e8f0;
 }
 
-.invoice-row.header {
-  font-weight: 700;
-  color: #64748b;
+.fp-label {
+  font-size: 0.7rem;
   text-transform: uppercase;
-  font-size: 0.75rem;
-  border-bottom: 2px solid #1e293b;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin: 0 0 0.15rem;
 }
 
-.invoice-row.total {
-  border-bottom: none;
-  border-top: 2px solid #1e293b;
-  margin-top: 0.5rem;
-  padding-top: 1rem;
-  font-weight: 800;
-  font-size: 1.25rem;
+.fp-valor {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0;
   color: #0f172a;
 }
 
-.invoice-row.total span:last-child {
-  color: #2563eb;
+.fp-valor-sm {
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin: 0;
+  color: #0f172a;
+}
+
+.fp-sub {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.fp-tabla {
+  padding: 1rem 1.5rem;
+}
+
+.fp-fila {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.45rem 0;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.fp-fila-detalle {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  padding: 0.1rem 0 0.1rem 1rem;
+}
+
+.fp-descuento { color: #dc2626; }
+
+.fp-fila-total {
+  border-top: 2px solid #0f172a;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.fp-fila-total span:last-child {
+  color: #1d4ed8;
+}
+
+.fp-fechas {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 1.5rem;
+  padding: 0.9rem 1rem;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.fp-fechas .fp-label { margin-bottom: 0.25rem; }
+
+.fp-gracias {
+  text-align: center;
+  padding: 1.25rem 1.5rem 0.25rem;
+}
+
+.fp-gracias p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #475569;
+  font-style: italic;
+}
+
+.fp-fiscal-note {
+  font-size: 0.7rem !important;
+  color: #94a3b8 !important;
+  font-style: normal !important;
+  margin-top: 0.25rem !important;
+}
+
+.fp-btn-imprimir {
+  margin: 1rem 1.5rem 1.5rem;
+  width: calc(100% - 3rem);
+}
+
+/* IMPRESIÓN: solo la factura sale en el papel */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .factura-premium-modal,
+  .factura-premium-modal * {
+    visibility: visible;
+  }
+  .factura-premium-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .fp-btn-imprimir,
+  .fp-cerrar {
+    display: none;
+  }
 }
 
 /* === PANTALLA DE LOGIN === */

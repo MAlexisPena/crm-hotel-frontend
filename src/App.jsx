@@ -451,11 +451,10 @@ function App() {
     }
   };
 
-  // Simulación de Check-in en tiempo real
-  // Simulación de Reserva en tiempo real (con debounce y cancelación de peticiones viejas)
+  // Simulación de Check-in en tiempo real (con debounce y cancelación de peticiones viejas)
   useEffect(() => {
 
-    if (formularioHuesped.habitacionId && formularioHuesped.fechaCheckIn && formularioHuesped.fechaCheckOut) {
+    if (habitacionCheckIn && formularioHuesped.fechaCheckOut) {
 
       const controller = new AbortController();
 
@@ -467,41 +466,42 @@ function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
 
-            habitacionId: formularioHuesped.habitacionId,
-            fechaCheckIn: formularioHuesped.fechaCheckIn,
+            habitacionId: habitacionCheckIn,          
+            fechaCheckIn: new Date().toISOString(),   
             fechaCheckOut: formularioHuesped.fechaCheckOut,
             descuento: formularioHuesped.descuento
 
           }),
-          signal: controller.signal // ← la orden de "puedo ser cancelado en vuelo"
+          signal: controller.signal
 
         })
           .then(res => res.json())
           .then(data => {
 
             if (data && data.totalConIva !== undefined) {
-              setSimulacionHuesped(data);
+              setSimulacionCheckIn(data);             // ← su propio setter
             }
 
           })
           .catch(err => {
 
-            if (err.name !== 'AbortError') { // Las cancelaciones NO son errores
+            if (err.name !== 'AbortError') {
               console.error('Error de red:', err);
             }
 
           });
 
-      }, 400); // ← espera 400ms después de tu última tecla
+      }, 400);
 
       return () => {
         clearTimeout(timer);
-        controller.abort(); // ← si algo cambió, cancela lo viejo ANTES de que responda
+        controller.abort();
       };
 
     }
 
   }, [habitacionCheckIn, formularioHuesped.fechaCheckOut, formularioHuesped.descuento]);
+
 
     // Simulación de Reserva en tiempo real (con debounce y cancelación de peticiones viejas)
   useEffect(() => {

@@ -48,6 +48,7 @@ function App() {
   const [huespedes, setHuespedes] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [huespedSeleccionado, setHuespedSeleccionado] = useState(null); // Para el modal de historial
+  const [cargandoHistorial, setCargandoHistorial] = useState(false);
 
   const [facturaVisible, setFacturaVisible] = useState(false);
   const [datosFactura, setDatosFactura] = useState(null);
@@ -60,9 +61,13 @@ function App() {
 
   const [dashboardData, setDashboardData] = useState(null);
 
+  const [cargandoLogin, setCargandoLogin] = useState(false);
+  const [cargandoNota, setCargandoNota] = useState(false);
   const [cargandoAccion, setCargandoAccion] = useState(false); // Para botones de check-in/out
   const [actualizandoDash, setActualizandoDash] = useState(false); // Para el dashboard
   const [CargandoListas, setCargandoListas] = useState(true);
+  const [cargandoHuespedes, setCargandoHuespedes] = useState(false);
+  const [cargandoReservas, setCargandoReservas] = useState(false);
 
   const [toast, setToast] = useState(null);
 
@@ -175,6 +180,9 @@ function App() {
 
   // Función para obtener huéspedes desde el backend
   const obtenerHuespedes = (textoBusqueda = "") => {
+
+    setCargandoHuespedes(true);
+
     const url = textoBusqueda
       ? `${API_URL}/api/huespedes?q=${textoBusqueda}`
       : API_URL + "/api/huespedes";
@@ -182,16 +190,27 @@ function App() {
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
+
         if (Array.isArray(data)) {
+
           setHuespedes(data);
+
         } else {
+
           console.error("El backend devolvió un error:", data);
           setHuespedes([]);
+
         }
+        
+        setCargandoHuespedes(false);
+
       })
       .catch((err) => {
+
         console.error("Error de red:", err);
         setHuespedes([]);
+        setCargandoHuespedes(false);
+
       });
   };
 
@@ -584,7 +603,11 @@ function App() {
 
   // Guardar nota del huésped
   const handleGuardarNota = async () => {
+
+    setCargandoNota(true);
+
     try {
+
       const response = await fetch(
         `${API_URL}/api/huespedes/${huespedNotas.id}/notas`,
         {
@@ -601,7 +624,39 @@ function App() {
       }
     } catch (error) {
       mostrarToast("Error al guardar la nota", "error");
+    } finally {
+      setCargandoNota(false);
     }
+  };
+
+    // Abrir el historial del huésped: mostramos la tarjeta al instante
+  // y consultamos sus reservas en segundo plano
+  const abrirHistorialHuesped = async (huesped) => {
+
+    setHuespedSeleccionado(huesped); // la tarjeta ya se ve (nombre, doc, email...)
+    setCargandoHistorial(true);
+
+    try {
+
+      const response = await fetch(`${API_URL}/api/huespedes/${huesped.id}/historial`);
+
+      if (response.ok) {
+
+        const data = await response.json();
+        setHuespedSeleccionado(data); // ahora SÍ trae las reservas
+
+      }
+
+    } catch (error) {
+
+      console.error('Error al cargar historial:', error);
+
+    } finally {
+
+      setCargandoHistorial(false);
+
+    }
+
   };
 
   // Función para hacer Check-out y Facturar
@@ -642,10 +697,20 @@ function App() {
 
   // Obtener todas las reservas
   const obtenerTodasReservas = () => {
+
+    setCargandoReservas(true);
+
     fetch(API_URL + "/api/reservas")
       .then((res) => res.json())
-      .then((data) => setTodasReservas(Array.isArray(data) ? data : []))
-      .catch((err) => console.error(err));
+      .then((data) => { 
+        setTodasReservas(Array.isArray(data) ? data : []);
+        setCargandoReservas(false);
+
+      })
+      .catch((err) => {
+        console.error(err);
+        setCargandoReservas(false);
+      });
   };
 
   // Actualizar todas las reservas cada vez que se entra a la vista de reservas
@@ -935,6 +1000,7 @@ function App() {
   // Función Enviar credenciales al backend
   const handleLogin = async (e) => {
     e.preventDefault();
+    setCargandoLogin(true);
 
     try {
       const response = await fetch(API_URL + "/api/auth/login", {
@@ -955,6 +1021,8 @@ function App() {
       }
     } catch (error) {
       alert("Error de conexión");
+    } finally {
+      setCargandoLogin(false);
     }
   };
 
@@ -1306,8 +1374,8 @@ function App() {
             />
           </div>
 
-          <button type="submit" className="btn-primario btn-full">
-            Ingresar
+          <button type="submit" className="btn-primario btn-full" disabled={cargandoLogin}>
+            {cargandoLogin ? "⏳ Verificando..." : "Ingresar"}
           </button>
 
           {import.meta.env.DEV && (
@@ -1773,14 +1841,16 @@ function App() {
             </header>
 
             <div className="guest-list">
-              {huespedes.length === 0 ? (
+              {cargandoHuespedes ? (
+                <p className="cargando">⏳ Obteniendo huéspedes...</p>
+              ) : huespedes.length === 0 ? (
                 <p className="cargando">No se encontraron huéspedes...</p>
               ) : (
                 huespedes.map((huesped) => (
                   <div
                     key={huesped.id}
                     className="guest-card"
-                    onClick={() => setHuespedSeleccionado(huesped)}
+                    onClick={() => abrirHistorialHuesped(huesped)}
                   >
                     <div className="guest-avatar">
                       {huesped.nombre.charAt(0)}
@@ -2054,7 +2124,9 @@ function App() {
             </div>
 
             <div className="reservations-list" style={{ marginTop: "1.5rem" }}>
-              {reservasPaginadas.length === 0 ? (
+              {cargandoReservas ? (
+                <p className="cargando">⏳ Obteniendo reservas...</p>
+              ) : reservasPaginadas.length === 0 ? (
                 <p className="cargando">No se encontraron reservas...</p>
               ) : (
                 reservasPaginadas.map((reserva) => (
@@ -2700,21 +2772,15 @@ function App() {
             </div>
             <div className="reservation-history">
               <h4>Reservas Anteriores</h4>
-              {huespedSeleccionado.reservas.length > 0 ? (
-                huespedSeleccionado.reservas.map((reserva) => (
+              {cargandoHistorial ? (
+                <p className="cargando">📋 Consultando historial...</p>
+              ) : huespedSeleccionado.reservas && huespedSeleccionado.reservas.length > 0 ? (
+                huespedSeleccionado.reservas.map(reserva => (
                   <div key={reserva.id} className="history-item">
-                    <span className="history-room">
-                      Habitación {reserva.habitacion.numero}
-                    </span>
+                    <span className="history-room">Habitación {reserva.habitacion.numero}</span>
                     <span className="history-date">
-                      📅{" "}
-                      {new Date(reserva.fechaCheckIn).toLocaleDateString(
-                        "es-CO",
-                      )}{" "}
-                      -
-                      {new Date(reserva.fechaCheckOut).toLocaleDateString(
-                        "es-CO",
-                      )}
+                      📅 {new Date(reserva.fechaCheckIn).toLocaleDateString('es-CO')} - 
+                      {new Date(reserva.fechaCheckOut).toLocaleDateString('es-CO')}
                     </span>
                   </div>
                 ))
@@ -3448,9 +3514,10 @@ function App() {
             <button
               className="btn-primario btn-full"
               style={{ marginTop: "1rem" }}
-              onClick={handleGuardarNota}
+              onClick={handleGuardarNota} 
+              disabled={cargandoNota}
             >
-              💾 Guardar Nota
+              {cargandoNota ? "⏳ Guardando..." : "💾 Guardar Nota"}
             </button>
           </div>
         </div>
